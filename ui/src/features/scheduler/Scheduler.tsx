@@ -1,59 +1,14 @@
-import { Calendar, CalendarProps, Flex, Select, Space, Tag } from "antd"
+import { Button, Calendar, CalendarProps, Flex, Select, Space, Tag } from "antd"
 import type { Dayjs } from 'dayjs'
 import dayjs from "dayjs"
 import './CustomCalendar.css'
+import { useAppDispatch } from "../../app/hooks"
+import { addItemModalOpened } from "./SchedulerSlice"
+import { AddItemModal } from "./AddItemModal"
+import { CalendarItem } from "./SchedulerAPI"
 
 
 const { Option } = Select
-
-type ItemType = 'task' | 'event' | 'reminder' | 'todoList' | 'goal' | 'birthday'
-type CalendarItem = | TaskItem | EventItem | ReminderItem | TodoListItem | GoalItem | BirthdayItem
-
-type BaseItem = {
-  id: string
-  type: ItemType
-  title: string
-  date: string
-  description?: string
-  color?: string
-}
-
-type TaskItem = BaseItem & {
-  type: 'task'
-  dueDate?: string
-  completed?: boolean
-  priority?: 'low' | 'medium' | 'high'
-}
-
-type EventItem = BaseItem & {
-  type: 'event'
-  startTime?: string
-  endTime?: string
-  allDay?: boolean
-}
-
-type ReminderItem = BaseItem & {
-  type: 'reminder'
-  remindAt: string
-}
-
-type TodoListItem = BaseItem & {
-  type: 'todoList'
-  items: { text: string; done: boolean }[]
-}
-
-type GoalItem = BaseItem & {
-  type: 'goal'
-  deadline?: string
-  progress?: number
-  steps?: { text: string; done: boolean }[]
-}
-
-type BirthdayItem = BaseItem & {
-  type: 'birthday'
-  personName: string
-  giftIdeas?: string[]
-}
 
 const listOfCalendarItems: CalendarItem[] = [
   {
@@ -111,6 +66,7 @@ const listOfCalendarItems: CalendarItem[] = [
 ]
 
 export const Scheduler: React.FC = () => {
+  const dispatch = useAppDispatch()
 
   const dateCellRender = (value: Dayjs) => {
     const itemsForDay = listOfCalendarItems.filter(item =>
@@ -149,11 +105,15 @@ export const Scheduler: React.FC = () => {
 
   return (
     <Space direction="vertical" style={{ width: '100%' }} size="large">
+      <AddItemModal />
+
       <Space wrap>
         <Select placeholder="Select option" style={{ width: 200 }}>
           <Option value="option1">Option 1</Option>
           <Option value="option2">Option 2</Option>
         </Select>
+
+        <Button onClick={() => dispatch(addItemModalOpened(true))}>Add Item</Button>
       </Space>
 
       <Space>

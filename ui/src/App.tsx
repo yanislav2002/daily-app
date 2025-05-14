@@ -81,7 +81,7 @@ const App = () => {
         width={260}
       >
         <Space >
-          <Image src='../public/logo.png' width='80px' preview={false} />
+          <Image src='/logo.png' width='80px' preview={false} />
         </Space>
         <Menu
           mode="inline"
