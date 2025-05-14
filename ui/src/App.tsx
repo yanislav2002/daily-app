@@ -10,9 +10,10 @@ import {
   MessageOutlined,
   SettingOutlined
 } from '@ant-design/icons'
+import { Scheduler } from './features/scheduler/Scheduler'
+
 
 const { Sider, Content } = Layout
-
 
 const items = [
   {
@@ -28,7 +29,7 @@ const items = [
   {
     key: '3',
     icon: <FormOutlined />,
-    label: 'Tasks'
+    label: 'Activity Board'
   },
   {
     key: '4',
@@ -61,7 +62,7 @@ const App = () => {
       case '1':
         return <div>Content for Navigation One</div>
       case '2':
-        return <div>Content for Navigation Two</div>
+        return <Scheduler />
       case '13':
         return <div>Content for Option 13</div>
       case '14':
@@ -89,7 +90,14 @@ const App = () => {
           items={items}
         />
       </Sider>
-      <Content style={{ padding: '24px', backgroundColor: '#1e1e1e', color: 'white', flex: 1 }}>
+      <Content style={{
+        padding: '24px',
+        backgroundColor: '#1e1e1e',
+        color: 'white',
+        flex: 1,
+        height: '100vh',
+        overflow: 'auto'
+      }}>
         {renderContent(selectedKey)}
       </Content>
     </Layout>
