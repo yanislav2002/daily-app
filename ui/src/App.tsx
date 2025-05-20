@@ -91,7 +91,6 @@ const App = () => {
         />
       </Sider>
       <Content style={{
-        padding: '24px',
         backgroundColor: '#1e1e1e',
         color: 'white',
         flex: 1,

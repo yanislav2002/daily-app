@@ -1,6 +1,7 @@
 
 export type ItemType = 'task' | 'event' | 'reminder' | 'todoList' | 'goal' | 'birthday'
 export type CalendarItem = | TaskItem | EventItem | ReminderItem | TodoListItem | GoalItem | BirthdayItem
+export type Priority = 'low' | 'medium' | 'high' | 'critical'
 
 export type BaseItem = {
   id: string
@@ -15,7 +16,7 @@ export type TaskItem = BaseItem & {
   type: 'task'
   deadline?: string  
   completed?: boolean
-  priority?: 'low' | 'medium' | 'high'
+  priority?: Priority
 }
 
 export type EventItem = BaseItem & {

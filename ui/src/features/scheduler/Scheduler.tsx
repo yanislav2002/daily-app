@@ -104,7 +104,7 @@ export const Scheduler: React.FC = () => {
   }
 
   return (
-    <Space direction="vertical" style={{ width: '100%' }} size="large">
+    <Space direction="vertical" style={{ width: '100%', height: '100vh' }} size="large">
       <AddItemModal />
 
       <Space wrap>
@@ -118,6 +118,7 @@ export const Scheduler: React.FC = () => {
 
       <Space>
         <Calendar
+          fullscreen
           style={{
             border: '1px solid #f0f0f0',
             borderRadius: 8,
@@ -125,7 +126,6 @@ export const Scheduler: React.FC = () => {
           }}
           cellRender={cellRender}
         />
-
       </Space>
     </Space>
   )
