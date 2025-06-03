@@ -6,14 +6,20 @@ import { ItemType } from "./SchedulerAPI"
 type State = {
   addItemModal: {
     open: boolean
-    itemType: ItemType
+    fields: {
+      itemType: ItemType
+      allDay: boolean
+    }
   }
 }
 
 const initialState: State = {
   addItemModal: {
     open: false,
-    itemType: 'event'
+    fields: {
+      itemType: 'event',
+      allDay: false
+    }
   }
 }
 
@@ -25,9 +31,11 @@ const schedulerSlice = createSlice({
       state.addItemModal.open = action.payload
     },
     modalItemTypeChanged: (state, action: PayloadAction<ItemType>) => {
-      state.addItemModal.itemType = action.payload
+      state.addItemModal.fields.itemType = action.payload
+    },
+    formFieldAllDaySwitched: (state, action: PayloadAction<boolean>) => {
+      state.addItemModal.fields.allDay = action.payload
     }
-
   }
   // extraReducers(builder) {
   // builder.
@@ -38,7 +46,8 @@ export const selectModalState = (state: RootState) => state.scheduler.addItemMod
 
 export const {
   addItemModalOpened,
-  modalItemTypeChanged
+  modalItemTypeChanged,
+  formFieldAllDaySwitched
 } = schedulerSlice.actions
 
 export default schedulerSlice.reducer

@@ -4,7 +4,6 @@ export type CalendarItem = | TaskItem | EventItem | ReminderItem | TodoListItem 
 export type Priority = 'low' | 'medium' | 'high' | 'critical'
 
 export type BaseItem = {
-  id: string
   type: ItemType
   title: string
   date: string
