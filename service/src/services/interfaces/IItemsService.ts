@@ -1,5 +1,4 @@
-import axios from "axios"
-
+import { CalendarItemEntity } from "../../model/ItemsEntity.js"
 
 export type ItemType = 'task' | 'event' | 'reminder' | 'todoList' | 'goal' | 'birthday'
 export type CalendarItem = | TaskItem | EventItem | ReminderItem | TodoListItem | GoalItem | BirthdayItem
@@ -9,22 +8,22 @@ export type BaseItem = {
   type: ItemType
   title: string
   date: string
-  description?: string
-  color?: string
+  description: string
+  color: string
 }
 
 export type TaskItem = BaseItem & {
   type: 'task'
-  deadline?: string  
-  completed?: boolean
-  priority?: Priority
+  deadline: string
+  completed: boolean
+  priority: Priority
 }
 
 export type EventItem = BaseItem & {
   type: 'event'
-  startTime?: string
-  endTime?: string
-  allDay?: boolean
+  startTime: string
+  endTime: string
+  allDay: boolean
 }
 
 export type ReminderItem = BaseItem & {
@@ -39,27 +38,18 @@ export type TodoListItem = BaseItem & {
 
 export type GoalItem = BaseItem & {
   type: 'goal'
-  deadline?: string
-  progress?: number
-  steps?: { text: string; done: boolean }[]
+  deadline: string
+  progress: number
+  steps: { text: string; done: boolean }[]
 }
 
 export type BirthdayItem = BaseItem & {
   type: 'birthday'
   personName: string
-  giftIdeas?: string[]
+  giftIdeas: string[]
 }
 
-//todo fix this whole func
-export const createItem = async (itemParams: CalendarItem) /*: Promise<CalendarItemEntity>*/ => {
-  const res = await axios.post('/items/insert', itemParams)
-
-  if (res.status !== 200) {
-    throw new Error('Failed to insert item')
-  }
-  
-  console.log(res)
-  
-
-  // return res.data
+export type IItemsService = {
+  getAllItems(): CalendarItemEntity[]
+  insertItem(unknownItem: CalendarItem, userId: string): Promise<CalendarItemEntity>
 }

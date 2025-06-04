@@ -1,7 +1,13 @@
 import { ColorPicker, DatePicker, Divider, Flex, Form, Input, Modal, Select, Switch, TimePicker } from 'antd'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
-import { addItemModalOpened, formFieldAllDaySwitched, modalItemTypeChanged, selectModalState } from './SchedulerSlice'
-import { CalendarItem, ItemType, Priority } from './SchedulerAPI'
+import {
+  addItemModalOpened,
+  formFieldAllDaySwitched,
+  insertCalendarItem,
+  modalItemTypeChanged,
+  selectModalState
+} from './SchedulerSlice'
+import { CalendarItem, ItemType, Priority, TaskItem } from './SchedulerAPI'
 import { Dayjs } from 'dayjs'
 
 
@@ -121,9 +127,24 @@ export const AddItemModal: React.FC = () => {
 
   const [form] = Form.useForm<FormValues>()
 
-  const onFinish = (values: FormValues) => {
+  const onFinish = async (values: FormValues) => {
     try {
       const calendarItem = transformFormValuesToCalendarItem(values)
+      
+      //todo finish this part 
+      
+      const newItem: TaskItem = {
+        type: 'task',
+        title: 'Finish UI',
+        date: '2025-06-05',
+        description: 'UI for new item input',
+        color: '#ff9900',
+        deadline: '2025-06-07',
+        completed: false,
+        priority: 'high'
+      }
+
+      await dispatch(insertCalendarItem(newItem))
 
       console.log(calendarItem)
     } catch (err: unknown) {

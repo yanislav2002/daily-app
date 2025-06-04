@@ -1,7 +1,7 @@
 import { Request, Response } from "express"
 import { inject, injectable } from "inversify"
-import { IExampleService } from "../services/interfaces/IExampleService"
-import { TYPES } from "../util/Types"
+import { IExampleService } from "../services/interfaces/IExampleService.js"
+import { TYPES } from "../util/Types.js"
 
 
 @injectable()

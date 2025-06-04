@@ -1,8 +1,9 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit"
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit"
 import { RootState } from "../../app/store"
-import { ItemType } from "./SchedulerAPI"
+import { CalendarItem, createItem, ItemType } from "./SchedulerAPI"
 
 
+//todo add thunk prop and group here the items
 type State = {
   addItemModal: {
     open: boolean
@@ -41,6 +42,17 @@ const schedulerSlice = createSlice({
   // builder.
   // },
 })
+
+//todo fix this whole func + add thunk prop
+export const insertCalendarItem = createAsyncThunk(
+  'calendar/insertItem',
+  async (item: CalendarItem) => {
+
+    const result = createItem(item)
+    return result
+
+  }
+)
 
 export const selectModalState = (state: RootState) => state.scheduler.addItemModal
 

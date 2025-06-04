@@ -1,5 +1,5 @@
 import { injectable } from "inversify"
-import { IExampleService } from "./interfaces/IExampleService"
+import { IExampleService } from "./interfaces/IExampleService.js"
 
 @injectable()
 export class ExampleService implements IExampleService {

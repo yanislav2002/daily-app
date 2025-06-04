@@ -44,9 +44,9 @@ module.exports = defineConfig([{
 
     "object-curly-newline": "off",
 
-    "no-underscore-dangle": ["error", {
-      "allowAfterThis": true,
-    }],
+    // "no-underscore-dangle": ["error", {
+    //   "allowAfterThis": true,
+    // }],
 
     "no-param-reassign": ["error", {
       "props": false,
