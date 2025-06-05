@@ -1,67 +1,95 @@
 import mongoose from "mongoose"
-import { BirthdayItem, EventItem, GoalItem, ReminderItem, TaskItem, TodoListItem } from "../../services/interfaces/IItemsService.js"
-
-//todo add userid to all
+import {
+  TaskDetails,
+  EventDetails,
+  ReminderDetails,
+  TodoListDetails,
+  GoalDetails,
+  BirthdayDetails,
+  Item
+} from "../../services/interfaces/IItemsService.js"
 
 
 const BaseItemSchemaFields = {
-  type: { type: String, required: true },
+  userId: { type: String, required: true },
+  type: { type: String, required: true, enum: ['task', 'event', 'reminder', 'todoList', 'goal', 'birthday'] },
   title: { type: String, required: true },
   date: { type: String, required: true },
-  description: { type: String },
-  color: { type: String }
+  description: { type: String, default: '' },
+  color: { type: String, default: '' }
 }
 
-const TaskSchema = new mongoose.Schema<TaskItem>({
-  ...BaseItemSchemaFields,
-  deadline: { type: String },
-  completed: { type: Boolean, default: false },
-  priority: { type: String, enum: ['low', 'medium', 'high', 'critical'] }
-})
+const TaskDetailsSchema = new mongoose.Schema({
+  deadline: { type: String, required: true },
+  completed: { type: Boolean, required: true, default: false },
+  priority: { type: String, required: true, enum: ['low', 'medium', 'high', 'critical'] }
+}, { _id: false })
 
-const EventSchema = new mongoose.Schema<EventItem>({
-  ...BaseItemSchemaFields,
-  startTime: { type: String },
-  endTime: { type: String },
-  allDay: { type: Boolean, default: false }
-})
+const EventDetailsSchema = new mongoose.Schema({
+  startTime: { type: String, default: '' },
+  endTime: { type: String, default: '' },
+  allDay: { type: Boolean, required: true, default: false }
+}, { _id: false })
 
-const ReminderSchema = new mongoose.Schema<ReminderItem>({
-  ...BaseItemSchemaFields,
+const ReminderDetailsSchema = new mongoose.Schema({
   remindAt: { type: String, required: true }
-})
+}, { _id: false })
 
-const TodoListSchema = new mongoose.Schema<TodoListItem>({
-  ...BaseItemSchemaFields,
+const TodoListDetailsSchema = new mongoose.Schema({
   items: [
     {
       text: { type: String, required: true },
       done: { type: Boolean, default: false }
     }
   ]
-})
+}, { _id: false })
 
-const GoalSchema = new mongoose.Schema<GoalItem>({
-  ...BaseItemSchemaFields,
-  deadline: { type: String },
-  progress: { type: Number, min: 0, max: 100 },
+const GoalDetailsSchema = new mongoose.Schema({
+  deadline: { type: String, required: true },
+  progress: { type: Number, required: true, min: 0, max: 100 },
   steps: [
     {
       text: { type: String, required: true },
       done: { type: Boolean, default: false }
     }
   ]
-})
+}, { _id: false })
 
-const BirthdaySchema = new mongoose.Schema<BirthdayItem>({
-  ...BaseItemSchemaFields,
+const BirthdayDetailsSchema = new mongoose.Schema({
   personName: { type: String, required: true },
   giftIdeas: [{ type: String }]
+}, { _id: false })
+
+const BaseItemSchema = new mongoose.Schema({
+  ...BaseItemSchemaFields,
+  details: { type: mongoose.Schema.Types.Mixed, required: true }
+}, {
+  discriminatorKey: 'type',
+  versionKey: false
 })
 
-export const TaskModel = mongoose.model<TaskItem>('Task', TaskSchema)
-export const EventModel = mongoose.model<EventItem>('Event', EventSchema)
-export const ReminderModel = mongoose.model<ReminderItem>('Reminder', ReminderSchema)
-export const TodoListModel = mongoose.model<TodoListItem>('TodoList', TodoListSchema)
-export const GoalModel = mongoose.model<GoalItem>('Goal', GoalSchema)
-export const BirthdayModel = mongoose.model<BirthdayItem>('Birthday', BirthdaySchema)
+const BaseItemModel = mongoose.model<Item>('Item', BaseItemSchema)
+
+export const TaskModel = BaseItemModel.discriminator<TaskDetails>('task', new mongoose.Schema({
+  details: { type: TaskDetailsSchema, required: true }
+}))
+
+export const EventModel = BaseItemModel.discriminator<EventDetails>('event', new mongoose.Schema({
+  details: { type: EventDetailsSchema, required: true }
+}))
+
+export const ReminderModel = BaseItemModel.discriminator<ReminderDetails>('reminder', new mongoose.Schema({
+  details: { type: ReminderDetailsSchema, required: true }
+}))
+
+export const TodoListModel = BaseItemModel.discriminator<TodoListDetails>('todoList', new mongoose.Schema({
+  details: { type: TodoListDetailsSchema, required: true }
+}))
+
+export const GoalModel = BaseItemModel.discriminator<GoalDetails>('goal', new mongoose.Schema({
+  details: { type: GoalDetailsSchema, required: true }
+}))
+
+export const BirthdayModel = BaseItemModel.discriminator<BirthdayDetails>('birthday', new mongoose.Schema({
+  details: { type: BirthdayDetailsSchema, required: true }
+}))

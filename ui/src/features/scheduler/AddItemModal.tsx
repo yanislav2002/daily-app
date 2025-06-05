@@ -3,11 +3,11 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import {
   addItemModalOpened,
   formFieldAllDaySwitched,
-  insertCalendarItem,
+  insertItemAsync,
   modalItemTypeChanged,
   selectModalState
 } from './SchedulerSlice'
-import { CalendarItem, ItemType, Priority, TaskItem } from './SchedulerAPI'
+import { Item, ItemType, Priority } from './SchedulerAPI'
 import { Dayjs } from 'dayjs'
 
 
@@ -55,7 +55,7 @@ const priorityOptions = [
   { label: 'Critical', value: 'critical' }
 ]
 
-const transformFormValuesToCalendarItem = (values: FormValues): CalendarItem => {
+const transformFormValuesToCalendarItem = (values: FormValues): Item => {
   const baseItem = {
     type: values.itemTypes,
     title: values.title,
@@ -68,51 +68,57 @@ const transformFormValuesToCalendarItem = (values: FormValues): CalendarItem => 
     case 'task':
       return {
         ...baseItem,
-        type: 'task',
-        deadline: values.time?.format('HH:mm'),
-        completed: false,
-        priority: values.priority
+        details: {
+          deadline: values.time?.format('HH:mm') ?? '',
+          completed: false,
+          priority: values.priority
+        }
       }
 
     case 'event': {
       return {
         ...baseItem,
-        type: 'event',
-        startTime: values.timeRange?.[0].format('HH:mm'),
-        endTime: values.timeRange?.[1].format('HH:mm'),
-        allDay: values.allDay
+        details: {
+          startTime: values.timeRange?.[0].format('HH:mm') ?? '',
+          endTime: values.timeRange?.[1].format('HH:mm') ?? '',
+          allDay: values.allDay
+        }
       }
     }
 
     case 'reminder':
       return {
         ...baseItem,
-        type: 'reminder',
-        remindAt: values.time?.format('HH:mm') ?? ''
+        details: {
+          remindAt: values.time?.format('HH:mm') ?? ''
+        }
       }
 
     case 'todoList':
       return {
         ...baseItem,
-        type: 'todoList',
-        items: values.labelList.map(label => ({ text: label, done: false }))
+        details: {
+          items: values.labelList.map(label => ({ text: label, done: false }))
+        }
       }
 
     case 'goal':
       return {
         ...baseItem,
-        type: 'goal',
-        deadline: values.time?.format('HH:mm'),
-        progress: 0,
-        steps: values.labelList.map(label => ({ text: label, done: false }))
+        details: {
+          deadline: values.time?.format('HH:mm') ?? '',
+          progress: 0,
+          steps: values.labelList.map(label => ({ text: label, done: false }))
+        }
       }
 
     case 'birthday':
       return {
         ...baseItem,
-        type: 'birthday',
-        personName: values.label,
-        giftIdeas: values.labelList.length > 0 ? values.labelList : undefined
+        details: {
+          personName: values.label,
+          giftIdeas: values.labelList.length > 0 ? values.labelList : []
+        }
       }
 
     default:
@@ -129,24 +135,11 @@ export const AddItemModal: React.FC = () => {
 
   const onFinish = async (values: FormValues) => {
     try {
-      const calendarItem = transformFormValuesToCalendarItem(values)
+      const item = transformFormValuesToCalendarItem(values)
       
-      //todo finish this part 
-      
-      const newItem: TaskItem = {
-        type: 'task',
-        title: 'Finish UI',
-        date: '2025-06-05',
-        description: 'UI for new item input',
-        color: '#ff9900',
-        deadline: '2025-06-07',
-        completed: false,
-        priority: 'high'
-      }
+      console.log(item)
 
-      await dispatch(insertCalendarItem(newItem))
-
-      console.log(calendarItem)
+      await dispatch(insertItemAsync(item))
     } catch (err: unknown) {
       console.log(err)
       return

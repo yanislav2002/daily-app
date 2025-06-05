@@ -1,55 +1,50 @@
-import { CalendarItemEntity } from "../../model/ItemsEntity.js"
+import { ItemEntity } from "../../model/ItemsEntity.js"
+
 
 export type ItemType = 'task' | 'event' | 'reminder' | 'todoList' | 'goal' | 'birthday'
-export type CalendarItem = | TaskItem | EventItem | ReminderItem | TodoListItem | GoalItem | BirthdayItem
 export type Priority = 'low' | 'medium' | 'high' | 'critical'
 
-export type BaseItem = {
+export type Item = {
   type: ItemType
   title: string
   date: string
   description: string
   color: string
+  details: TaskDetails | EventDetails | ReminderDetails | TodoListDetails | GoalDetails | BirthdayDetails
 }
 
-export type TaskItem = BaseItem & {
-  type: 'task'
+export type TaskDetails = {
   deadline: string
   completed: boolean
   priority: Priority
 }
 
-export type EventItem = BaseItem & {
-  type: 'event'
+export type EventDetails = {
   startTime: string
   endTime: string
   allDay: boolean
 }
 
-export type ReminderItem = BaseItem & {
-  type: 'reminder'
+export type ReminderDetails = {
   remindAt: string
 }
 
-export type TodoListItem = BaseItem & {
-  type: 'todoList'
+export type TodoListDetails = {
   items: { text: string; done: boolean }[]
 }
 
-export type GoalItem = BaseItem & {
-  type: 'goal'
+export type GoalDetails = {
   deadline: string
   progress: number
   steps: { text: string; done: boolean }[]
 }
 
-export type BirthdayItem = BaseItem & {
-  type: 'birthday'
+export type BirthdayDetails = {
   personName: string
   giftIdeas: string[]
 }
 
 export type IItemsService = {
-  getAllItems(): CalendarItemEntity[]
-  insertItem(unknownItem: CalendarItem, userId: string): Promise<CalendarItemEntity>
+  getAllItems(): ItemEntity[]
+  insertItem(item: Item, userId: string): Promise<ItemEntity>
 }

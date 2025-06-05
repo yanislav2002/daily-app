@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit"
 import { RootState } from "../../app/store"
-import { CalendarItem, createItem, ItemType } from "./SchedulerAPI"
+import { insertItem, Item, ItemType } from "./SchedulerAPI"
 
 
 //todo add thunk prop and group here the items
@@ -43,14 +43,16 @@ const schedulerSlice = createSlice({
   // },
 })
 
-//todo fix this whole func + add thunk prop
-export const insertCalendarItem = createAsyncThunk(
+export const insertItemAsync = createAsyncThunk(
   'calendar/insertItem',
-  async (item: CalendarItem) => {
+  async (item: Item) => {
+    const userId = 'testUser' //todo use real Id
 
-    const result = createItem(item)
+    const result = await insertItem(item, userId)
+    
+    console.log(result)
+    
     return result
-
   }
 )
 
