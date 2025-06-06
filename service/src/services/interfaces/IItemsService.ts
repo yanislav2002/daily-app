@@ -45,6 +45,6 @@ export type BirthdayDetails = {
 }
 
 export type IItemsService = {
-  getAllItems(): ItemEntity[]
+  fetchItems(userId: string): Promise<ItemEntity[]>
   insertItem(item: Item, userId: string): Promise<ItemEntity>
 }

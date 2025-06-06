@@ -1,7 +1,15 @@
 import { injectable } from "inversify"
 import { IItemsService, Item } from "./interfaces/IItemsService.js"
 import { ItemEntity } from "../model/ItemsEntity.js"
-import { BirthdayModel, EventModel, GoalModel, ReminderModel, TaskModel, TodoListModel } from "../model/schemas/Items.schema.js"
+import {
+  BaseItemModel,
+  BirthdayModel,
+  EventModel,
+  GoalModel,
+  ReminderModel,
+  TaskModel,
+  TodoListModel
+} from "../model/schemas/Items.schema.js"
 import { isItemEntity } from "../controllers/ItemsController.js"
 
 
@@ -12,7 +20,27 @@ export class ItemsService implements IItemsService {
     throw new Error("Method not implemented.")
   }
 
-  async insertItem(item: Item, userId: string): Promise<ItemEntity> {
+  public fetchItems = async (userId: string): Promise<ItemEntity[]> => {
+    const docs = await BaseItemModel.find({ userId }).lean()
+
+    const itemEntities: ItemEntity[] = docs.map(doc => {
+      const { _id, ...rest } = doc
+      const itemEntity = {
+        ...rest,
+        id: _id.toString()
+      }
+
+      if (!isItemEntity(itemEntity)) {
+        throw new Error('Invalid ItemEntity from DB')
+      }
+
+      return itemEntity
+    })
+
+    return itemEntities
+  }
+
+  public insertItem = async (item: Item, userId: string): Promise<ItemEntity> => {
     const test = await this.getItemEntity(item, userId)
     console.log('New Item added successfully')
     return test

@@ -11,7 +11,7 @@ import {
 import { Request, Response } from "express"
 import { inject } from "inversify"
 import { TYPES } from "../util/Types.js"
-import { controller, httpPost, request, response } from "inversify-express-utils"
+import { controller, httpGet, httpPost, request, response } from "inversify-express-utils"
 import { ItemEntity } from "../model/ItemsEntity.js"
 import { getErrorMessage } from "../util/ErrorUtils.js"
 
@@ -126,8 +126,26 @@ export class ItemsController {
     @inject(TYPES.IItemsService) private itemsService: IItemsService
   ) { }
 
+  @httpGet('/fetch')
+  public async fetchItems(@request() req: Request, @response() res: Response) {
+    const userId = req.query.userId
+
+    if (typeof userId !== 'string') {
+      res.status(400).json({ error: 'Missing or invalid userId query parameter' })
+      return
+    }
+
+    try {
+      const items = await this.itemsService.fetchItems(userId)
+      res.status(200).json(items)
+    } catch (err) {
+      console.error('Failed to fetch items: ', getErrorMessage(err))
+      res.status(500).json({ error: 'Failed to fetch items' })
+    }
+  }
+
   @httpPost('/insert')
-  public async insertItem(@request() req: Request, @response() res: Response): Promise<void> {
+  public async insertItem(@request() req: Request, @response() res: Response) {
     const request: unknown = req.body
 
     if (

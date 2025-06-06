@@ -68,7 +68,7 @@ const BaseItemSchema = new mongoose.Schema({
   versionKey: false
 })
 
-const BaseItemModel = mongoose.model<Item>('Item', BaseItemSchema)
+export const BaseItemModel = mongoose.model<Item>('Item', BaseItemSchema)
 
 export const TaskModel = BaseItemModel.discriminator<TaskDetails>('task', new mongoose.Schema({
   details: { type: TaskDetailsSchema, required: true }
