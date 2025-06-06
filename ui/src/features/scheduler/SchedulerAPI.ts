@@ -153,10 +153,24 @@ export type BirthdayDetails = {
   giftIdeas: string[]
 }
 
+export const fetchItems = async (userId: string): Promise<ItemEntity[]> => {
+  const res = await axios.get('/items/fetch', { params: { userId } })
+
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error('Failed to fetch items')
+  }
+
+  if (Array.isArray(res.data) && res.data.every(item => isItemEntity(item))) {
+    return res.data
+  }
+
+  throw new Error('Invalid Response Data')
+}
+
 export const insertItem = async (itemParams: Item, userId: string): Promise<ItemEntity> => {
   const res = await axios.post('/items/insert', { itemParams, userId })
 
-  if (res.status !== 200) {
+  if (res.status < 200 || res.status >= 300) {
     throw new Error('Failed to insert item')
   }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import { Menu, Layout, Space, Image } from 'antd'
 import {
@@ -11,6 +11,8 @@ import {
   SettingOutlined
 } from '@ant-design/icons'
 import { Scheduler } from './features/scheduler/Scheduler'
+import { fetchItemsAsync } from './features/scheduler/SchedulerSlice'
+import { useAppDispatch } from './app/hooks'
 
 
 const { Sider, Content } = Layout
@@ -54,8 +56,22 @@ const items = [
 ]
 
 const App = () => {
-  const [selectedKey, setSelectedKey] = useState('1')
-  const [collapsed, setCollapsed] = useState(false)
+  const dispatch = useAppDispatch()
+
+  const [selectedKey, setSelectedKey] = useState('1') //todo remove useState
+  const [collapsed, setCollapsed] = useState(false) //todo remove useState
+
+  useEffect(() => {
+    const onLoad = async () => {
+      try {
+        await dispatch(fetchItemsAsync())
+      } catch (error) {
+        console.log('Failed to fetch items', error)
+      }
+    }
+
+    onLoad().catch((err: unknown) => { console.log(err) })
+  }, [dispatch])
 
   const renderContent = (key: string) => {
     switch (key) {

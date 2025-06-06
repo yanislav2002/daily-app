@@ -137,8 +137,6 @@ export const AddItemModal: React.FC = () => {
     try {
       const item = transformFormValuesToCalendarItem(values)
       
-      console.log(item)
-
       await dispatch(insertItemAsync(item))
     } catch (err: unknown) {
       console.log(err)
