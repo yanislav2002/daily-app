@@ -61,7 +61,8 @@ const transformFormValuesToCalendarItem = (values: FormValues): Item => {
     title: values.title,
     date: values.date?.format('DD-MM-YYYY') ?? '',
     description: values.description || '',
-    color: values.colorPicker
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    color: values.colorPicker.toHexString() //todo fix this issue with color string and object
   }
 
   switch (values.itemTypes) {
@@ -136,7 +137,7 @@ export const AddItemModal: React.FC = () => {
   const onFinish = async (values: FormValues) => {
     try {
       const item = transformFormValuesToCalendarItem(values)
-      
+
       await dispatch(insertItemAsync(item))
     } catch (err: unknown) {
       console.log(err)

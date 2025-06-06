@@ -7,6 +7,7 @@ import ThunkStatus from "../../util/ThunkStatus"
 const itemsAdapter = createEntityAdapter<ItemEntity>()
 
 type State = {
+  fetchingItems: ThunkStatus
   insertingItem: ThunkStatus
   addItemModal: {
     open: boolean
@@ -19,6 +20,7 @@ type State = {
 }
 
 const initialState: State = {
+  fetchingItems: { status: "idle" },
   insertingItem: { status: "idle" },
   addItemModal: {
     open: false,
@@ -46,15 +48,29 @@ const schedulerSlice = createSlice({
   },
   extraReducers(builder) {
     builder
+      .addCase(fetchItemsAsync.pending, (state) => {
+        state.fetchingItems.status = 'loading'
+      })
+      .addCase(fetchItemsAsync.fulfilled, (state, action) => {
+        const items = action.payload
+
+        itemsAdapter.setAll(state.itemsAdapter, items)
+
+        state.fetchingItems.status = 'succeeded'
+      })
+      .addCase(fetchItemsAsync.rejected, (state) => {
+        state.fetchingItems.status = 'failed'
+        state.fetchingItems.error = '//todo add err'
+      })
       .addCase(insertItemAsync.pending, (state) => {
         state.insertingItem.status = 'loading'
       })
       .addCase(insertItemAsync.fulfilled, (state, action) => {
         const itemEntity = action.payload
-        console.log(itemEntity)
 
         itemsAdapter.setOne(state.itemsAdapter, itemEntity)
-
+        
+        state.addItemModal.open = false
         state.insertingItem.status = 'succeeded'
       })
       .addCase(insertItemAsync.rejected, (state) => {
@@ -77,7 +93,7 @@ export const fetchItemsAsync = createAsyncThunk(
   'calendar/fetchItems',
   async () => {
     const userId = 'testUser' //todo use real Id
-    
+
     return await fetchItems(userId)
   }
 )
