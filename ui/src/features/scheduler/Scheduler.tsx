@@ -1,11 +1,16 @@
-import { Button, Calendar, CalendarProps, Flex, Select, Space, Tag } from "antd"
+import { Button, Calendar, CalendarProps, Flex, notification, Select, Space, Tag } from "antd"
 import type { Dayjs } from 'dayjs'
 import dayjs from "dayjs"
 import './CustomCalendar.css'
-import { useAppDispatch } from "../../app/hooks"
-import { addItemModalOpened, itemsSelectors } from "./SchedulerSlice"
+import { useAppDispatch, useAppSelector } from "../../app/hooks"
+import {
+  addItemModalOpened,
+  insertingItemStatusChanged,
+  itemsSelectors,
+  selectInsertingItemState
+} from "./SchedulerSlice"
 import { AddItemModal } from "./AddItemModal"
-import { useSelector } from "react-redux"
+import { useEffect } from "react"
 
 
 const { Option } = Select
@@ -13,7 +18,30 @@ const { Option } = Select
 export const Scheduler: React.FC = () => {
   const dispatch = useAppDispatch()
 
-  const allItems = useSelector(itemsSelectors.selectAll)
+  const allItems = useAppSelector(itemsSelectors.selectAll)
+  const insertingItems = useAppSelector(selectInsertingItemState)
+
+  const [api, contextHolder] = notification.useNotification()
+
+  useEffect(() => {
+    if (insertingItems.status === 'succeeded') {
+      api.success({
+        message: 'Success',
+        description: 'Item added successfully!',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(insertingItemStatusChanged())
+    } else if (insertingItems.status === 'failed') {
+      api.error({
+        message: 'Error',
+        description: 'Failed to add item. Please try again.',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(insertingItemStatusChanged())
+    }
+  }, [insertingItems.status, api, dispatch])
 
   const dateCellRender = (value: Dayjs) => {
     const itemsForDay = allItems.filter(item =>
@@ -52,6 +80,8 @@ export const Scheduler: React.FC = () => {
 
   return (
     <Space direction="vertical" style={{ width: '100%', height: '100vh' }} size="large">
+      {contextHolder}
+
       <AddItemModal />
 
       <Space wrap>

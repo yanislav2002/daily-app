@@ -9,6 +9,7 @@ import {
 } from './SchedulerSlice'
 import { Item, ItemType, Priority } from './SchedulerAPI'
 import { Dayjs } from 'dayjs'
+import type { Color } from 'antd/es/color-picker'
 
 
 type FormValues = {
@@ -16,7 +17,7 @@ type FormValues = {
   date: Dayjs | undefined
   description: string
   itemTypes: ItemType
-  colorPicker: string
+  colorPicker: Color | string
   allDay: boolean
   timeRange: [Dayjs, Dayjs] | undefined
   time: Dayjs | undefined
@@ -56,13 +57,16 @@ const priorityOptions = [
 ]
 
 const transformFormValuesToCalendarItem = (values: FormValues): Item => {
+  const colorString = typeof values.colorPicker === 'string'
+    ? values.colorPicker
+    : values.colorPicker.toHexString()
+
   const baseItem = {
     type: values.itemTypes,
     title: values.title,
     date: values.date?.format('DD-MM-YYYY') ?? '',
     description: values.description || '',
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-    color: values.colorPicker.toHexString() //todo fix this issue with color string and object
+    color: colorString
   }
 
   switch (values.itemTypes) {

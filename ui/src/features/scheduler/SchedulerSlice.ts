@@ -44,6 +44,12 @@ const schedulerSlice = createSlice({
     },
     formFieldAllDaySwitched: (state, action: PayloadAction<boolean>) => {
       state.addItemModal.fields.allDay = action.payload
+    },
+    insertingItemStatusChanged: (state) => {
+      state.insertingItem = { status: 'idle', error: undefined }
+    },
+    fetchingItemStatusChanged: (state) => {
+      state.fetchingItems = { status: 'idle', error: undefined }
     }
   },
   extraReducers(builder) {
@@ -69,7 +75,7 @@ const schedulerSlice = createSlice({
         const itemEntity = action.payload
 
         itemsAdapter.setOne(state.itemsAdapter, itemEntity)
-        
+
         state.addItemModal.open = false
         state.insertingItem.status = 'succeeded'
       })
@@ -99,13 +105,16 @@ export const fetchItemsAsync = createAsyncThunk(
 )
 
 export const selectModalState = (state: RootState) => state.scheduler.addItemModal
+export const selectInsertingItemState = (state: RootState) => state.scheduler.insertingItem
 
 export const itemsSelectors = itemsAdapter.getSelectors((state: RootState) => state.scheduler.itemsAdapter)
 
 export const {
   addItemModalOpened,
   modalItemTypeChanged,
-  formFieldAllDaySwitched
+  formFieldAllDaySwitched,
+  insertingItemStatusChanged,
+  fetchingItemStatusChanged
 } = schedulerSlice.actions
 
 export default schedulerSlice.reducer
