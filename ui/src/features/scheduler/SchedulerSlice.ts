@@ -16,6 +16,10 @@ type State = {
       allDay: boolean
     }
   }
+  itemModal: {
+    open: boolean
+    item: ItemEntity | undefined
+  }
   itemsAdapter: EntityState<ItemEntity, string>
 }
 
@@ -28,6 +32,10 @@ const initialState: State = {
       itemType: 'event',
       allDay: false
     }
+  },
+  itemModal: {
+    open: false,
+    item: undefined
   },
   itemsAdapter: itemsAdapter.getInitialState()
 }
@@ -50,6 +58,12 @@ const schedulerSlice = createSlice({
     },
     fetchingItemStatusChanged: (state) => {
       state.fetchingItems = { status: 'idle', error: undefined }
+    },
+    itemModalItemSet: (state, action: PayloadAction<ItemEntity | undefined>) => {
+      state.itemModal.item = action.payload
+    },
+    itemModalOpened: (state, action: PayloadAction<boolean>) => {
+      state.itemModal.open = action.payload
     }
   },
   extraReducers(builder) {
@@ -105,6 +119,7 @@ export const fetchItemsAsync = createAsyncThunk(
 )
 
 export const selectModalState = (state: RootState) => state.scheduler.addItemModal
+export const selectItemModalState = (state: RootState) => state.scheduler.itemModal
 export const selectInsertingItemState = (state: RootState) => state.scheduler.insertingItem
 
 export const itemsSelectors = itemsAdapter.getSelectors((state: RootState) => state.scheduler.itemsAdapter)
@@ -114,7 +129,9 @@ export const {
   modalItemTypeChanged,
   formFieldAllDaySwitched,
   insertingItemStatusChanged,
-  fetchingItemStatusChanged
+  fetchingItemStatusChanged,
+  itemModalItemSet,
+  itemModalOpened
 } = schedulerSlice.actions
 
 export default schedulerSlice.reducer

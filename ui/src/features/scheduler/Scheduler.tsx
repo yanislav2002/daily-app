@@ -1,16 +1,20 @@
 import { Button, Calendar, CalendarProps, Flex, notification, Select, Space, Tag } from "antd"
 import type { Dayjs } from 'dayjs'
 import dayjs from "dayjs"
-import './CustomCalendar.css'
+import '../../../public/CustomCalendar.css'
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import {
   addItemModalOpened,
   insertingItemStatusChanged,
+  itemModalItemSet,
+  itemModalOpened,
   itemsSelectors,
   selectInsertingItemState
 } from "./SchedulerSlice"
 import { AddItemModal } from "./AddItemModal"
 import { useEffect } from "react"
+import { ItemEntity } from "./SchedulerAPI"
+import { ItemModal } from "./ItemModal"
 
 
 const { Option } = Select
@@ -22,6 +26,11 @@ export const Scheduler: React.FC = () => {
   const insertingItems = useAppSelector(selectInsertingItemState)
 
   const [api, contextHolder] = notification.useNotification()
+
+  const onItemOpen = (item: ItemEntity) => {
+    dispatch(itemModalItemSet(item))
+    dispatch(itemModalOpened(true))
+  }
 
   useEffect(() => {
     if (insertingItems.status === 'succeeded') {
@@ -54,7 +63,7 @@ export const Scheduler: React.FC = () => {
           style={{ width: '100%', margin: 2, alignSelf: 'center', cursor: 'pointer' }}
           key={item.id}
           color={item.color}
-          onClick={() => { console.log(item.title) }}
+          onClick={() => { onItemOpen(item) }}
         >
           {item.title}
         </Tag>
@@ -79,10 +88,11 @@ export const Scheduler: React.FC = () => {
   }
 
   return (
-    <Space direction="vertical" style={{ width: '100%', height: '100vh' }} size="large">
+    <Flex vertical align='center' gap={20} style={{ width: '100%', height: '100vh' }} >
       {contextHolder}
 
       <AddItemModal />
+      <ItemModal />
 
       <Space wrap>
         <Select placeholder="Select option" style={{ width: 200 }}>
@@ -93,17 +103,22 @@ export const Scheduler: React.FC = () => {
         <Button onClick={() => dispatch(addItemModalOpened(true))}>Add Item</Button>
       </Space>
 
-      <Space>
+      <Flex
+        justify="center"
+        style={{
+          width: '80vw',
+          height: '80%',
+          overflow: 'auto',
+          padding: 16,
+          background: 'white',
+          borderRadius: 8
+        }}>
         <Calendar
           fullscreen
-          style={{
-            border: '1px solid #f0f0f0',
-            borderRadius: 8,
-            overflow: 'hidden'
-          }}
+          style={{ border: '2px solid #f0f0f0' }}
           cellRender={cellRender}
         />
-      </Space>
-    </Space>
+      </Flex>
+    </Flex>
   )
 }
