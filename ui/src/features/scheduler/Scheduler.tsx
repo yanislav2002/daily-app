@@ -101,6 +101,10 @@ export const Scheduler: React.FC = () => {
         </Select>
 
         <Button onClick={() => dispatch(addItemModalOpened(true))}>Add Item</Button>
+
+        <Button>Add Tasks</Button>
+
+        <Button>Add Category</Button>
       </Space>
 
       <Flex

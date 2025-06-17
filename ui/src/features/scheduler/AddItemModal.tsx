@@ -1,8 +1,23 @@
-import { ColorPicker, DatePicker, Divider, Flex, Form, Input, Modal, Select, Switch, TimePicker } from 'antd'
+import {
+  Checkbox,
+  CheckboxChangeEvent,
+  ColorPicker,
+  DatePicker,
+  Divider,
+  Flex,
+  Form,
+  Input,
+  Modal,
+  Select,
+  Space,
+  Switch,
+  TimePicker
+} from 'antd'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import {
   addItemModalOpened,
   formFieldAllDaySwitched,
+  formFieldHasTodoListSwitched,
   insertItemAsync,
   modalItemTypeChanged,
   selectModalState
@@ -43,10 +58,7 @@ const initialFormValues: FormValues = {
 const itemTypeOptions = [
   { label: 'Event', value: 'event' },
   { label: 'Task', value: 'task' },
-  { label: 'Reminder', value: 'reminder' },
-  { label: 'To-do List', value: 'todoList' },
-  { label: 'Goal', value: 'goal' },
-  { label: 'Birthday', value: 'birthday' }
+  { label: 'Reminder', value: 'reminder' }
 ]
 
 const priorityOptions = [
@@ -66,19 +78,27 @@ const transformFormValuesToCalendarItem = (values: FormValues): Item => {
     title: values.title,
     date: values.date?.format('DD-MM-YYYY') ?? '',
     description: values.description || '',
-    color: colorString
+    color: colorString,
+    repeat: undefined, //todo
+    categoryId: undefined //todo
   }
 
   switch (values.itemTypes) {
-    case 'task':
+    case 'task': {
       return {
         ...baseItem,
         details: {
-          deadline: values.time?.format('HH:mm') ?? '',
+          deadline: values.time?.format('HH:mm') ?? undefined,
           completed: false,
-          priority: values.priority
+          priority: values.priority,
+          status: 'not_started',
+          startTime: values.timeRange?.[0].format('HH:mm') ?? undefined,
+          endTime: values.timeRange?.[1].format('HH:mm') ?? undefined,
+          todoList: values.labelList.map(label => ({ text: label, done: false })),
+          estimatedTime: undefined //todo
         }
       }
+    }
 
     case 'event': {
       return {
@@ -91,50 +111,25 @@ const transformFormValuesToCalendarItem = (values: FormValues): Item => {
       }
     }
 
-    case 'reminder':
+    case 'reminder': {
       return {
         ...baseItem,
         details: {
           remindAt: values.time?.format('HH:mm') ?? ''
         }
       }
+    }
 
-    case 'todoList':
-      return {
-        ...baseItem,
-        details: {
-          items: values.labelList.map(label => ({ text: label, done: false }))
-        }
-      }
-
-    case 'goal':
-      return {
-        ...baseItem,
-        details: {
-          deadline: values.time?.format('HH:mm') ?? '',
-          progress: 0,
-          steps: values.labelList.map(label => ({ text: label, done: false }))
-        }
-      }
-
-    case 'birthday':
-      return {
-        ...baseItem,
-        details: {
-          personName: values.label,
-          giftIdeas: values.labelList.length > 0 ? values.labelList : []
-        }
-      }
-
-    default:
+    default: {
       throw new Error('Unsupported item type')
+    }
   }
 }
 
 export const AddItemModal: React.FC = () => {
   const dispatch = useAppDispatch()
   const { open, fields } = useAppSelector(selectModalState)
-  const { itemType, allDay } = fields
+  const { itemType, allDay, hasTodoList } = fields
 
   const [form] = Form.useForm<FormValues>()
 
@@ -219,15 +214,49 @@ export const AddItemModal: React.FC = () => {
 
         <Divider />
 
+        {itemType === 'task' &&
+          <Space style={{ paddingBottom: '15px' }}>
+            <Checkbox
+              onChange={(e: CheckboxChangeEvent) => {
+                dispatch(formFieldHasTodoListSwitched(!e.target.checked))
+              }}>
+              Includes to-do list
+            </Checkbox>
+          </Space>
+        }
+
+        <Form.Item
+          name='labelList'
+          hidden={!(itemType === 'task' && hasTodoList)}
+          style={{ flex: 1 }}
+          validateDebounce={300}
+        >
+          <Select
+            mode='tags'
+            style={{ width: '100%' }}
+            placeholder='Add to-do items by pressing Enter'
+            tokenSeparators={[',']}
+            open={false}
+          />
+        </Form.Item>
+
         <Flex gap={'10px'} >
           <Form.Item
             name='timeRange'
-            hidden={itemType !== 'event'}
+            hidden={itemType !== 'event' && itemType !== 'task'}
             style={{ flex: 1 }}
             validateDebounce={300}
-            rules={[{ required: itemType === 'event' && !allDay, message: 'Time Range is required' }]}
+            rules={[{
+              required: (itemType === 'event' && !allDay) || itemType === 'task',
+              message: 'Time Range is required'
+            }]}
           >
-            <TimePicker.RangePicker disabled={allDay} allowEmpty format='HH:mm' style={{ width: '100%' }} />
+            <TimePicker.RangePicker
+              disabled={allDay && itemType === 'event'}
+              allowEmpty
+              format='HH:mm'
+              style={{ width: '100%' }}
+            />
           </Form.Item>
 
           <Form.Item name='allDay' hidden={itemType !== 'event'}>
@@ -253,47 +282,22 @@ export const AddItemModal: React.FC = () => {
           </Form.Item>
 
           <Form.Item
-            name='label'
-            hidden={itemType !== 'birthday'}
-            style={{ flex: 1 }}
-            validateDebounce={300}
-            rules={[{ required: itemType === 'birthday', message: 'Person Name is required' }]}
-          >
-            <Input placeholder='Person Name' />
-          </Form.Item>
-
-          <Form.Item
             name='time'
-            hidden={itemType !== 'task' && itemType !== 'reminder' && itemType !== 'goal'}
+            hidden={itemType !== 'task' && itemType !== 'reminder'}
             style={{ flex: 1 }}
             validateDebounce={300}
             rules={[{
-              required: itemType === 'task' || itemType === 'reminder' || itemType === 'goal',
+              required: itemType === 'reminder',
               message: 'Time is required'
             }]}
           >
-            <TimePicker format='HH:mm' placeholder='Remind at' style={{ width: '100%' }} />
+            <TimePicker
+              format='HH:mm'
+              placeholder={itemType === 'task' ? 'Deadline' : 'Remind at'}
+              style={{ width: '100%' }}
+            />
           </Form.Item>
         </Flex>
-
-        <Form.Item
-          name='labelList'
-          hidden={itemType !== 'todoList' && itemType !== 'birthday' && itemType !== 'goal'}
-          style={{ flex: 1 }}
-          validateDebounce={300}
-          rules={[{
-            required: itemType === 'todoList' || itemType === 'birthday' || itemType === 'goal',
-            message: 'Field is required'
-          }]}
-        >
-          <Select
-            mode='tags'
-            style={{ width: '100%' }}
-            placeholder='Add to-do items by pressing Enter'
-            tokenSeparators={[',']}
-            open={false}
-          />
-        </Form.Item>
 
       </Form>
     </Modal>

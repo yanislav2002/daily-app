@@ -14,6 +14,7 @@ type State = {
     fields: {
       itemType: ItemType
       allDay: boolean
+      hasTodoList: boolean
     }
   }
   itemModal: {
@@ -30,7 +31,8 @@ const initialState: State = {
     open: false,
     fields: {
       itemType: 'event',
-      allDay: false
+      allDay: false,
+      hasTodoList: false
     }
   },
   itemModal: {
@@ -52,6 +54,9 @@ const schedulerSlice = createSlice({
     },
     formFieldAllDaySwitched: (state, action: PayloadAction<boolean>) => {
       state.addItemModal.fields.allDay = action.payload
+    },
+    formFieldHasTodoListSwitched: (state, action: PayloadAction<boolean>) => {
+      state.addItemModal.fields.hasTodoList = action.payload
     },
     insertingItemStatusChanged: (state) => {
       state.insertingItem = { status: 'idle', error: undefined }
@@ -131,7 +136,8 @@ export const {
   insertingItemStatusChanged,
   fetchingItemStatusChanged,
   itemModalItemSet,
-  itemModalOpened
+  itemModalOpened,
+  formFieldHasTodoListSwitched
 } = schedulerSlice.actions
 
 export default schedulerSlice.reducer

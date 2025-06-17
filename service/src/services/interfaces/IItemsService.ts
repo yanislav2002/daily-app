@@ -1,27 +1,36 @@
 import { ItemEntity } from "../../model/ItemsEntity.js"
 
 
-export type ItemType = 'task' | 'event' | 'reminder' | 'todoList' | 'goal' | 'birthday'
+export type ItemType = 'task' | 'event' | 'reminder'
 export type Priority = 'low' | 'medium' | 'high' | 'critical'
+export type TaskStatus = 'not_started' | 'in_progress' | 'waiting' | 'canceled' | 'done'
+export type Frequency = 'daily' | 'weekly' | 'monthly' | 'yearly'
 
 export type Item = {
   type: ItemType
   title: string
   date: string
   description: string
-  color: string
-  details: TaskDetails | EventDetails | ReminderDetails | TodoListDetails | GoalDetails | BirthdayDetails
+  color?: string
+  repeat?: RepeatSettings
+  categoryId?: string
+  details: TaskDetails | EventDetails | ReminderDetails
 }
 
 export type TaskDetails = {
   deadline: string
   completed: boolean
   priority: Priority
+  status: TaskStatus
+  todoList?: TodoList[]
+  estimatedTime?: number
+  startTime?: string
+  endTime?: string
 }
 
 export type EventDetails = {
-  startTime: string
-  endTime: string
+  startTime?: string
+  endTime?: string
   allDay: boolean
 }
 
@@ -29,19 +38,16 @@ export type ReminderDetails = {
   remindAt: string
 }
 
-export type TodoListDetails = {
-  items: { text: string; done: boolean }[]
+export type RepeatSettings = {
+  frequency: Frequency
+  interval: number
+  daysOfWeek?: number[] /*1-7*/
+  endDate?: string
 }
 
-export type GoalDetails = {
-  deadline: string
-  progress: number
-  steps: { text: string; done: boolean }[]
-}
-
-export type BirthdayDetails = {
-  personName: string
-  giftIdeas: string[]
+export type TodoList = {
+  text: string;
+  done: boolean
 }
 
 export type IItemsService = {

@@ -17,9 +17,12 @@ export const isItem = (item: unknown): item is Item => {
     'title' in item && typeof item.title === 'string' &&
     'date' in item && typeof item.date === 'string' &&
     'description' in item && typeof item.date === 'string' &&
-    'color' in item && typeof item.date === 'string' &&
     'details' in item && typeof item.details === 'object'
   ) {
+    if ('color' in item && typeof item.color !== 'string') return false
+    if ('categoryId' in item && typeof item.categoryId !== 'string') return false
+    if ('repeat' in item && !isRepeatSettings(item.repeat)) return false
+
     switch (item.type) {
       case 'task':
         return isTaskDetails(item.details)
@@ -27,12 +30,6 @@ export const isItem = (item: unknown): item is Item => {
         return isEventDetails(item.details)
       case 'reminder':
         return isReminderDetails(item.details)
-      case 'todoList':
-        return isTodoListDetails(item.details)
-      case 'goal':
-        return isGoalDetails(item.details)
-      case 'birthday':
-        return isBirthdayDetails(item.details)
       default:
         return false
     }
@@ -41,26 +38,23 @@ export const isItem = (item: unknown): item is Item => {
   return false
 }
 
-const isChecklistItem = (item: unknown): item is { text: string; done: boolean } => {
-  return (
-    typeof item === 'object' && item !== null &&
-    'text' in item && typeof item.text === 'string' &&
-    'done' in item && typeof item.done === 'boolean'
-  )
-}
-
-const isStringArray = (value: unknown): value is string[] => {
-  return Array.isArray(value) && value.every((v) => typeof v === 'string')
-}
-
 export const isTaskDetails = (item: unknown): item is TaskDetails => {
-  return (
+  if (
     typeof item === 'object' && item !== null &&
     'deadline' in item && typeof item.deadline === 'string' &&
     'completed' in item && typeof item.completed === 'boolean' &&
-    'priority' in item &&
-    typeof item.priority === 'string' && ['low', 'medium', 'high', 'critical'].includes(item.priority)
-  )
+    'priority' in item && typeof item.priority === 'string'
+    && ['low', 'medium', 'high', 'critical'].includes(item.priority) &&
+    'status' in item && typeof item.status === 'string' &&
+    ['not_started', 'in_progress', 'waiting', 'canceled', 'done'].includes(item.priority) 
+  ) {
+    if ('estimatedTime' in item && typeof item.estimatedTime !== 'number') return false
+    if ('startTime' in item && typeof item.startTime !== 'string') return false
+    if ('endTime' in item && typeof item.endTime !== 'string') return false
+    if ('todoList' in item && !isTodoList(item.todoList)) return false
+  }
+
+  return true
 }
 
 export const isEventDetails = (item: unknown): item is EventDetails => {
@@ -79,34 +73,32 @@ export const isReminderDetails = (item: unknown): item is ReminderDetails => {
   )
 }
 
-export const isTodoListDetails = (item: unknown): item is TodoListDetails => {
+const isTodoList = (item: unknown): item is TodoList => {
   return (
     typeof item === 'object' && item !== null &&
-    'items' in item && Array.isArray(item.items) &&
-    item.items.every(isChecklistItem)
+    'text' in item && typeof item.text === 'string' &&
+    'done' in item && typeof item.done === 'boolean'
   )
 }
 
-export const isGoalDetails = (item: unknown): item is GoalDetails => {
-  return (
-    typeof item === 'object' && item !== null &&
-    'deadline' in item && typeof item.deadline === 'string' &&
-    'progress' in item && typeof item.progress === 'number' &&
-    'steps' in item && Array.isArray(item.steps) &&
-    item.steps.every(isChecklistItem)
-  )
+const isNumberArray = (value: unknown): value is number[] => {
+  return Array.isArray(value) && value.every((v) => typeof v === 'number')
 }
 
-export const isBirthdayDetails = (item: unknown): item is BirthdayDetails => {
+const isRepeatSettings = (value: unknown): value is RepeatSettings => {
   return (
-    typeof item === 'object' && item !== null &&
-    'personName' in item && typeof item.personName === 'string' &&
-    'giftIdeas' in item && isStringArray(item.giftIdeas)
-  )
+    typeof value === 'object' && value !== null &&
+    'frequency' in value && typeof value.frequency === 'string' &&
+    ['daily', 'weekly', 'monthly', 'yearly'].includes(value.frequency)) &&
+    'interval' in value && typeof value.interval === 'number' &&
+    'daysOfWeek' in value && isNumberArray(value.daysOfWeek) &&
+    'endDate' in value && value.endDate === 'string'
 }
 
-export type ItemType = 'task' | 'event' | 'reminder' | 'todoList' | 'goal' | 'birthday'
+export type ItemType = 'task' | 'event' | 'reminder'
 export type Priority = 'low' | 'medium' | 'high' | 'critical'
+export type TaskStatus = 'not_started' | 'in_progress' | 'waiting' | 'canceled' | 'done'
+export type Frequency = 'daily' | 'weekly' | 'monthly' | 'yearly'
 
 export type ItemEntity = Item & {
   id: string
@@ -118,19 +110,26 @@ export type Item = {
   title: string
   date: string
   description: string
-  color: string
-  details: TaskDetails | EventDetails | ReminderDetails | TodoListDetails | GoalDetails | BirthdayDetails
+  color?: string
+  repeat?: RepeatSettings
+  categoryId?: string
+  details: TaskDetails | EventDetails | ReminderDetails
 }
 
 export type TaskDetails = {
-  deadline: string
   completed: boolean
   priority: Priority
+  status: TaskStatus
+  deadline?: string
+  todoList?: TodoList[]
+  estimatedTime?: number
+  startTime?: string
+  endTime?: string
 }
 
 export type EventDetails = {
-  startTime: string
-  endTime: string
+  startTime?: string
+  endTime?: string
   allDay: boolean
 }
 
@@ -138,19 +137,16 @@ export type ReminderDetails = {
   remindAt: string
 }
 
-export type TodoListDetails = {
-  items: { text: string; done: boolean }[]
+export type RepeatSettings = {
+  frequency: Frequency
+  interval: number
+  daysOfWeek?: number[] /*1-7*/
+  endDate?: string
 }
 
-export type GoalDetails = {
-  deadline: string
-  progress: number
-  steps: { text: string; done: boolean }[]
-}
-
-export type BirthdayDetails = {
-  personName: string
-  giftIdeas: string[]
+export type TodoList = {
+  text: string;
+  done: boolean
 }
 
 export const fetchItems = async (userId: string): Promise<ItemEntity[]> => {
@@ -169,7 +165,7 @@ export const fetchItems = async (userId: string): Promise<ItemEntity[]> => {
 
 export const insertItem = async (itemParams: Item, userId: string): Promise<ItemEntity> => {
   const res = await axios.post('/items/insert', { itemParams, userId })
-
+  
   if (res.status < 200 || res.status >= 300) {
     throw new Error('Failed to insert item')
   }

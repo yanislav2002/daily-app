@@ -3,12 +3,9 @@ import { IItemsService, Item } from "./interfaces/IItemsService.js"
 import { ItemEntity } from "../model/ItemsEntity.js"
 import {
   BaseItemModel,
-  BirthdayModel,
   EventModel,
-  GoalModel,
   ReminderModel,
-  TaskModel,
-  TodoListModel
+  TaskModel
 } from "../model/schemas/Items.schema.js"
 import { isItemEntity } from "../controllers/ItemsController.js"
 
@@ -93,54 +90,9 @@ export class ItemsService implements IItemsService {
 
         return newItemEntity
       }
-      case 'todoList': {
-        const itemDoc = await TodoListModel.create({ ...item, userId })
-        const { _id, ...rest } = itemDoc.toObject()
-
-        const newItemEntity = {
-          ...rest,
-          id: _id.toString()
-        }
-
-        if (!isItemEntity(newItemEntity)) {
-          throw new Error("Failed to create valid ItemEntity")
-        }
-
-        return newItemEntity
-      }
-      case 'goal': {
-        const itemDoc = await GoalModel.create({ ...item, userId })
-        const { _id, ...rest } = itemDoc.toObject()
-
-        const newItemEntity = {
-          ...rest,
-          id: _id.toString()
-        }
-
-        if (!isItemEntity(newItemEntity)) {
-          throw new Error("Failed to create valid ItemEntity")
-        }
-
-        return newItemEntity
-      }
-      case 'birthday': {
-        const itemDoc = await BirthdayModel.create({ ...item, userId })
-        const { _id, ...rest } = itemDoc.toObject()
-
-        const newItemEntity = {
-          ...rest,
-          id: _id.toString()
-        }
-
-        if (!isItemEntity(newItemEntity)) {
-          throw new Error("Failed to create valid ItemEntity")
-        }
-
-        return newItemEntity
-      }
-
-      default:
+      default: {
         throw new Error('Invalid CalendarItem type')
+      }
     }
   }
 
