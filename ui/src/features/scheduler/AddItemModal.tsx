@@ -173,8 +173,9 @@ export const AddItemModal: React.FC = () => {
         initialValues={initialFormValues}
         validateTrigger={['onChange', 'onSubmit']}
         onFinish={onFinish}
+        style={{ marginTop: '30px' }}
       >
-        <Flex gap={'10px'} style={{ marginTop: '30px' }}>
+        <Flex gap={'10px'}>
           <Form.Item
             name='title'
             style={{ flex: 1 }}

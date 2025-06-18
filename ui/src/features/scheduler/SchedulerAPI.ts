@@ -46,7 +46,7 @@ export const isTaskDetails = (item: unknown): item is TaskDetails => {
     'priority' in item && typeof item.priority === 'string'
     && ['low', 'medium', 'high', 'critical'].includes(item.priority) &&
     'status' in item && typeof item.status === 'string' &&
-    ['not_started', 'in_progress', 'waiting', 'canceled', 'done'].includes(item.priority) 
+    ['not_started', 'in_progress', 'waiting', 'canceled', 'done'].includes(item.priority)
   ) {
     if ('estimatedTime' in item && typeof item.estimatedTime !== 'number') return false
     if ('startTime' in item && typeof item.startTime !== 'string') return false
@@ -95,16 +95,42 @@ const isRepeatSettings = (value: unknown): value is RepeatSettings => {
     'endDate' in value && value.endDate === 'string'
 }
 
+const isCategory = (value: unknown): value is Category => {
+  return (
+    typeof value === 'object' && value !== null &&
+    'name' in value && typeof value.name === 'string' &&
+    'color' in value && typeof value.color === 'string' &&
+    'description' in value && typeof value.description === 'string'
+  )
+}
+
+const isCategoryEntity = (value: unknown): value is CategoryEntity => {
+  return (
+    typeof value === 'object' && value !== null &&
+    'id' in value && typeof value.id === 'string' &&
+    'userId' in value && typeof value.userId === 'string' &&
+    isCategory(value)
+  )
+}
+
 export type ItemType = 'task' | 'event' | 'reminder'
 export type Priority = 'low' | 'medium' | 'high' | 'critical'
 export type TaskStatus = 'not_started' | 'in_progress' | 'waiting' | 'canceled' | 'done'
 export type Frequency = 'daily' | 'weekly' | 'monthly' | 'yearly'
 
-export type ItemEntity = Item & {
+export type Entity = {
   id: string
   userId: string
 }
 
+export type CategoryEntity = Entity & Category
+export type Category = {
+  name: string
+  color: string
+  description?: string
+}
+
+export type ItemEntity = Entity & Item
 export type Item = {
   type: ItemType
   title: string
@@ -165,7 +191,7 @@ export const fetchItems = async (userId: string): Promise<ItemEntity[]> => {
 
 export const insertItem = async (itemParams: Item, userId: string): Promise<ItemEntity> => {
   const res = await axios.post('/items/insert', { itemParams, userId })
-  
+
   if (res.status < 200 || res.status >= 300) {
     throw new Error('Failed to insert item')
   }
@@ -175,4 +201,32 @@ export const insertItem = async (itemParams: Item, userId: string): Promise<Item
   }
 
   return res.data
+}
+
+export const insertCategory = async (category: Category, userId: string): Promise<CategoryEntity> => {
+  const res = await axios.post('/category/insert', { category, userId })
+
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error('Failed to insert category')
+  }
+
+  if (!isCategoryEntity(res.data)) {
+    throw new Error('Invalid Response Data')
+  }
+
+  return res.data
+}
+
+export const fetchCategories = async (userId: string): Promise<CategoryEntity[]> => {
+  const res = await axios.get('/category/fetch', { params: { userId } })
+
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error('Failed to fetch categories')
+  }
+
+  if (Array.isArray(res.data) && res.data.every(item => isCategoryEntity(item))) {
+    return res.data
+  }
+
+  throw new Error('Invalid Response Data')
 }

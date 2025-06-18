@@ -60,7 +60,7 @@ export const isTaskDetails = (item: unknown): item is TaskDetails => {
     'priority' in item && typeof item.priority === 'string'
     && ['low', 'medium', 'high', 'critical'].includes(item.priority) &&
     'status' in item && typeof item.status === 'string' &&
-    ['not_started', 'in_progress', 'waiting', 'canceled', 'done'].includes(item.priority) 
+    ['not_started', 'in_progress', 'waiting', 'canceled', 'done'].includes(item.priority)
   ) {
     if ('estimatedTime' in item && typeof item.estimatedTime !== 'number') return false
     if ('startTime' in item && typeof item.startTime !== 'string') return false
@@ -137,8 +137,6 @@ export class ItemsController {
   @httpPost('/insert')
   public async insertItem(@request() req: Request, @response() res: Response) {
     const request: unknown = req.body
-
-    console.log(request)
 
     if (
       typeof request !== 'object' || request === null ||

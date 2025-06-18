@@ -13,10 +13,6 @@ import { isItemEntity } from "../controllers/ItemsController.js"
 @injectable()
 export class ItemsService implements IItemsService {
 
-  getAllItems(): ItemEntity[] {
-    throw new Error("Method not implemented.")
-  }
-
   public fetchItems = async (userId: string): Promise<ItemEntity[]> => {
     const docs = await BaseItemModel.find({ userId }).lean()
 
@@ -34,6 +30,7 @@ export class ItemsService implements IItemsService {
       return itemEntity
     })
 
+    console.log('Fetched items successfully')
     return itemEntities
   }
 

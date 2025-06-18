@@ -11,7 +11,7 @@ import {
   SettingOutlined
 } from '@ant-design/icons'
 import { Scheduler } from './features/scheduler/Scheduler'
-import { fetchItemsAsync } from './features/scheduler/SchedulerSlice'
+import { fetchCategoriesAsync, fetchItemsAsync } from './features/scheduler/SchedulerSlice'
 import { useAppDispatch } from './app/hooks'
 
 
@@ -65,6 +65,7 @@ const App = () => {
     const onLoad = async () => {
       try {
         await dispatch(fetchItemsAsync())
+        await dispatch(fetchCategoriesAsync())
       } catch (error) {
         console.log('Failed to fetch items', error)
       }

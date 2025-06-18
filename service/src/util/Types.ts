@@ -1,4 +1,4 @@
 export const TYPES = {
-    IExampleService: Symbol.for("IExampleService"),
+    ICategoryService: Symbol.for("ICategoryService"),
     IItemsService: Symbol.for("IItemsService")
 } 

@@ -9,12 +9,14 @@ import {
   itemModalItemSet,
   itemModalOpened,
   itemsSelectors,
+  categoryModalOpened,
   selectInsertingItemState
 } from "./SchedulerSlice"
 import { AddItemModal } from "./AddItemModal"
 import { useEffect } from "react"
 import { ItemEntity } from "./SchedulerAPI"
 import { ItemModal } from "./ItemModal"
+import { CategoryModal } from "./CategoryModal"
 
 
 const { Option } = Select
@@ -93,6 +95,7 @@ export const Scheduler: React.FC = () => {
 
       <AddItemModal />
       <ItemModal />
+      <CategoryModal />
 
       <Space wrap>
         <Select placeholder="Select option" style={{ width: 200 }}>
@@ -102,9 +105,9 @@ export const Scheduler: React.FC = () => {
 
         <Button onClick={() => dispatch(addItemModalOpened(true))}>Add Item</Button>
 
-        <Button>Add Tasks</Button>
+        <Button >Add Tasks</Button>
 
-        <Button>Add Category</Button>
+        <Button onClick={() => dispatch(categoryModalOpened(true))}>Create Category</Button>
       </Space>
 
       <Flex
