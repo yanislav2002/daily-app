@@ -10,11 +10,13 @@ import {
   itemModalOpened,
   itemsSelectors,
   categoryModalOpened,
-  selectInsertingItemState
+  selectInsertingItemState,
+  selectInsertingCategoryState,
+  insertingCategoryStatusChanged
 } from "./SchedulerSlice"
 import { AddItemModal } from "./AddItemModal"
 import { useEffect } from "react"
-import { ItemEntity } from "./SchedulerAPI"
+import { ItemEntity, ItemType } from "./SchedulerAPI"
 import { ItemModal } from "./ItemModal"
 import { CategoryModal } from "./CategoryModal"
 
@@ -26,8 +28,30 @@ export const Scheduler: React.FC = () => {
 
   const allItems = useAppSelector(itemsSelectors.selectAll)
   const insertingItems = useAppSelector(selectInsertingItemState)
+  const insertingCategory = useAppSelector(selectInsertingCategoryState)
 
   const [api, contextHolder] = notification.useNotification()
+
+  const getTagStyleByType = (type: ItemType): React.CSSProperties => {
+    switch (type) {
+      case 'task':
+        return {
+          fontStyle: 'italic',
+          borderRadius: 6,
+          border: '2px dashed currentColor'
+        }
+      case 'event':
+        return {
+          fontWeight: 'bold'
+        }
+      case 'reminder':
+        return {
+          borderRadius: 20
+        }
+      default:
+        return {}
+    }
+  }
 
   const onItemOpen = (item: ItemEntity) => {
     dispatch(itemModalItemSet(item))
@@ -52,7 +76,25 @@ export const Scheduler: React.FC = () => {
       })
       dispatch(insertingItemStatusChanged())
     }
-  }, [insertingItems.status, api, dispatch])
+
+    if (insertingCategory.status === 'succeeded') {
+      api.success({
+        message: 'Success',
+        description: 'Category created successfully!',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(insertingCategoryStatusChanged())
+    } else if (insertingCategory.status === 'failed') {
+      api.error({
+        message: 'Error',
+        description: 'Failed to create category. Please try again.',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(insertingCategoryStatusChanged())
+    }
+  }, [insertingItems.status, api, dispatch, insertingCategory.status])
 
   const dateCellRender = (value: Dayjs) => {
     const itemsForDay = allItems.filter(item =>
@@ -62,7 +104,13 @@ export const Scheduler: React.FC = () => {
     return (
       itemsForDay.map((item) => (
         <Tag
-          style={{ width: '100%', margin: 2, alignSelf: 'center', cursor: 'pointer' }}
+          style={{
+            width: '100%',
+            margin: 2,
+            alignSelf: 'center',
+            cursor: 'pointer',
+            ...getTagStyleByType(item.type)
+          }}
           key={item.id}
           color={item.color}
           onClick={() => { onItemOpen(item) }}
@@ -90,7 +138,7 @@ export const Scheduler: React.FC = () => {
   }
 
   return (
-    <Flex vertical align='center' gap={20} style={{ width: '100%', height: '100vh' }} >
+    <Flex vertical align='center' gap={20} style={{ width: '100%', height: '100vh', padding: '20px' }} >
       {contextHolder}
 
       <AddItemModal />
@@ -114,7 +162,7 @@ export const Scheduler: React.FC = () => {
         justify="center"
         style={{
           width: '80vw',
-          height: '80%',
+          height: '85vh',
           overflow: 'auto',
           padding: 16,
           background: 'white',

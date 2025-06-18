@@ -38,6 +38,7 @@ export const CategoryModal: React.FC = () => {
 
   const onModalCancel = () => {
     dispatch(categoryModalOpened(false))
+    form.resetFields()
   }
 
   const onFinish = async (values: FormValues) => {
@@ -68,6 +69,7 @@ export const CategoryModal: React.FC = () => {
       open={open}
       onCancel={onModalCancel}
       onOk={onModalSubmit}
+      okText='Submit'
       destroyOnHidden
     >
       <Form

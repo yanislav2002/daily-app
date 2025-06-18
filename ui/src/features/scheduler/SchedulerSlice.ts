@@ -28,6 +28,7 @@ type State = {
       itemType: ItemType
       allDay: boolean
       hasTodoList: boolean
+      hasCategory: boolean
     }
   }
   itemModal: {
@@ -51,7 +52,8 @@ const initialState: State = {
     fields: {
       itemType: 'event',
       allDay: false,
-      hasTodoList: false
+      hasTodoList: false,
+      hasCategory: false
     }
   },
   itemModal: {
@@ -84,8 +86,14 @@ const schedulerSlice = createSlice({
     formFieldHasTodoListSwitched: (state, action: PayloadAction<boolean>) => {
       state.addItemModal.fields.hasTodoList = action.payload
     },
+    formFieldHasCategorySwitched: (state, action: PayloadAction<boolean>) => {
+      state.addItemModal.fields.hasCategory = action.payload
+    },
     insertingItemStatusChanged: (state) => {
       state.insertingItem = { status: 'idle', error: undefined }
+    },
+    insertingCategoryStatusChanged: (state) => {
+      state.insertingCategory = { status: 'idle', error: undefined }
     },
     fetchingItemStatusChanged: (state) => {
       state.fetchingItems = { status: 'idle', error: undefined }
@@ -151,7 +159,7 @@ const schedulerSlice = createSlice({
       })
       .addCase(fetchCategoriesAsync.fulfilled, (state, action) => {
         const categories = action.payload
-        
+
         categoriesAdapter.addMany(state.categoriesAdapter, categories)
 
         state.categoryModal.open = false
@@ -203,8 +211,9 @@ export const fetchCategoriesAsync = createAsyncThunk(
 
 export const selectModalState = (state: RootState) => state.scheduler.addItemModal
 export const selectItemModalState = (state: RootState) => state.scheduler.itemModal
-export const selectCategoryModal = (state: RootState) => state.scheduler.categoryModal
 export const selectInsertingItemState = (state: RootState) => state.scheduler.insertingItem
+export const selectInsertingCategoryState = (state: RootState) => state.scheduler.insertingCategory
+export const selectCategoryModal = (state: RootState) => state.scheduler.categoryModal
 
 export const itemsSelectors = itemsAdapter.getSelectors(
   (state: RootState) => state.scheduler.itemsAdapter
@@ -223,7 +232,9 @@ export const {
   itemModalItemSet,
   itemModalOpened,
   formFieldHasTodoListSwitched,
-  categoryModalOpened
+  categoryModalOpened,
+  formFieldHasCategorySwitched,
+  insertingCategoryStatusChanged
 } = schedulerSlice.actions
 
 export default schedulerSlice.reducer

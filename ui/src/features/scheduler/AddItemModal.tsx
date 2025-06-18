@@ -1,6 +1,4 @@
 import {
-  Checkbox,
-  CheckboxChangeEvent,
   ColorPicker,
   DatePicker,
   Divider,
@@ -11,12 +9,15 @@ import {
   Select,
   Space,
   Switch,
+  Tag,
   TimePicker
 } from 'antd'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import {
   addItemModalOpened,
+  categoriesSelectors,
   formFieldAllDaySwitched,
+  formFieldHasCategorySwitched,
   formFieldHasTodoListSwitched,
   insertItemAsync,
   modalItemTypeChanged,
@@ -25,6 +26,7 @@ import {
 import { Item, ItemType, Priority } from './SchedulerAPI'
 import { Dayjs } from 'dayjs'
 import type { Color } from 'antd/es/color-picker'
+import { CheckOutlined, PlusOutlined } from '@ant-design/icons'
 
 
 type FormValues = {
@@ -35,10 +37,11 @@ type FormValues = {
   colorPicker: Color | string
   allDay: boolean
   timeRange: [Dayjs, Dayjs] | undefined
-  time: Dayjs | undefined
+  remindAt: Dayjs | undefined
+  deadline: Dayjs | undefined
   labelList: string[]
   priority: Priority
-  label: string
+  category: string | undefined
 }
 
 const initialFormValues: FormValues = {
@@ -49,10 +52,11 @@ const initialFormValues: FormValues = {
   colorPicker: '#f5a623',
   allDay: false,
   timeRange: undefined,
-  time: undefined,
+  remindAt: undefined,
+  deadline: undefined,
   labelList: [],
   priority: 'low',
-  label: ''
+  category: undefined
 }
 
 const itemTypeOptions = [
@@ -68,7 +72,7 @@ const priorityOptions = [
   { label: 'Critical', value: 'critical' }
 ]
 
-const transformFormValuesToCalendarItem = (values: FormValues): Item => {
+const transformFormValuesToCalendarItem = (values: FormValues, hasCategory: boolean, categoryColor: string): Item => {
   const colorString = typeof values.colorPicker === 'string'
     ? values.colorPicker
     : values.colorPicker.toHexString()
@@ -78,9 +82,9 @@ const transformFormValuesToCalendarItem = (values: FormValues): Item => {
     title: values.title,
     date: values.date?.format('DD-MM-YYYY') ?? '',
     description: values.description || '',
-    color: colorString,
+    color: hasCategory ? categoryColor : colorString,
     repeat: undefined, //todo
-    categoryId: undefined //todo
+    categoryId: hasCategory ? values.category : undefined
   }
 
   switch (values.itemTypes) {
@@ -88,7 +92,7 @@ const transformFormValuesToCalendarItem = (values: FormValues): Item => {
       return {
         ...baseItem,
         details: {
-          deadline: values.time?.format('HH:mm') ?? undefined,
+          deadline: values.deadline?.format("DD-MM-YYYY HH:mm") ?? undefined,
           completed: false,
           priority: values.priority,
           status: 'not_started',
@@ -115,7 +119,7 @@ const transformFormValuesToCalendarItem = (values: FormValues): Item => {
       return {
         ...baseItem,
         details: {
-          remindAt: values.time?.format('HH:mm') ?? ''
+          remindAt: values.remindAt?.format('HH:mm') ?? ''
         }
       }
     }
@@ -128,14 +132,28 @@ const transformFormValuesToCalendarItem = (values: FormValues): Item => {
 
 export const AddItemModal: React.FC = () => {
   const dispatch = useAppDispatch()
+
+  const categories = useAppSelector(categoriesSelectors.selectAll)
   const { open, fields } = useAppSelector(selectModalState)
-  const { itemType, allDay, hasTodoList } = fields
+  const { itemType, allDay, hasTodoList, hasCategory } = fields
 
   const [form] = Form.useForm<FormValues>()
 
+  const categoryOptions = categories.map(category => ({
+    value: category.id,
+    label: (
+      <Space size="small">
+        <Tag color={category.color} style={{ margin: 0, padding: 0, width: 10, height: 10, borderRadius: 10 }} />
+        {category.name}
+      </Space>
+    )
+  }))
+
   const onFinish = async (values: FormValues) => {
     try {
-      const item = transformFormValuesToCalendarItem(values)
+      const category = categories.find(cat => cat.id === values.category)
+
+      const item = transformFormValuesToCalendarItem(values, hasCategory, category?.color ?? '')
 
       await dispatch(insertItemAsync(item))
     } catch (err: unknown) {
@@ -144,9 +162,17 @@ export const AddItemModal: React.FC = () => {
     }
   }
 
+  const resetFormAndState = () => {
+    form.resetFields()
+    dispatch(modalItemTypeChanged('event'))
+    dispatch(formFieldHasCategorySwitched(false))
+    dispatch(formFieldHasTodoListSwitched(false))
+    dispatch(formFieldAllDaySwitched(false))
+  }
+
   const onModalCancel = () => {
     dispatch(addItemModalOpened(false))
-    form.resetFields()
+    resetFormAndState()
   }
 
   const onModalSubmit = async () => {
@@ -154,7 +180,9 @@ export const AddItemModal: React.FC = () => {
       await form.validateFields()
 
       form.submit()
-      setTimeout(() => { form.resetFields() }, 200)
+      setTimeout(() => {
+        resetFormAndState()
+      }, 200)
     } catch {
       return
     }
@@ -166,6 +194,7 @@ export const AddItemModal: React.FC = () => {
       open={open}
       onCancel={onModalCancel}
       onOk={onModalSubmit}
+      okText='Add'
       destroyOnHidden
     >
       <Form
@@ -180,7 +209,10 @@ export const AddItemModal: React.FC = () => {
             name='title'
             style={{ flex: 1 }}
             validateDebounce={300}
-            rules={[{ required: true, message: 'Title is required' }]}
+            rules={[
+              { required: true, message: 'Title is required' },
+              { max: 30, message: 'Title cannot be longer than 30 characters' }
+            ]}
           >
             <Input placeholder='Title' />
           </Form.Item>
@@ -197,7 +229,7 @@ export const AddItemModal: React.FC = () => {
           </Form.Item>
 
           <Form.Item name='colorPicker'>
-            <ColorPicker />
+            <ColorPicker disabled={hasCategory} />
           </Form.Item>
         </Flex>
 
@@ -213,18 +245,58 @@ export const AddItemModal: React.FC = () => {
           <Input.TextArea placeholder='Description' autoSize={{ minRows: 3, maxRows: 3 }} />
         </Form.Item>
 
-        <Divider />
+        <Flex gap='10px'>
+          <Switch
+            style={{ marginTop: '5px' }}
+            onChange={(value: boolean) => { dispatch(formFieldHasCategorySwitched(value)) }}
+          />
 
-        {itemType === 'task' &&
-          <Space style={{ paddingBottom: '15px' }}>
-            <Checkbox
-              onChange={(e: CheckboxChangeEvent) => {
-                dispatch(formFieldHasTodoListSwitched(!e.target.checked))
-              }}>
-              Includes to-do list
-            </Checkbox>
-          </Space>
-        }
+          <Form.Item name='category' style={{ width: '100%' }}>
+            <Select
+              disabled={!hasCategory}
+              options={categoryOptions}
+              placeholder="Select a category"
+            />
+          </Form.Item>
+        </Flex>
+
+        <Divider style={{ marginTop: '0px' }} />
+
+        <Flex gap='10px'>
+          {
+            itemType === 'task' &&
+            <Switch
+              style={{ marginTop: '6px' }}
+              checkedChildren={<><CheckOutlined /> To-Do</>}
+              unCheckedChildren={<><PlusOutlined /> To-Do</>}
+              onChange={(value: boolean) => { dispatch(formFieldHasTodoListSwitched(value)) }}
+            />
+          }
+
+          <Form.Item
+            name='deadline'
+            hidden={itemType !== 'task'}
+            style={{ flex: 1 }}
+            validateDebounce={300}
+          >
+            <DatePicker
+              showTime
+              format='DD-MM-YYYY HH:mm'
+              placeholder={'Deadline'}
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name='priority'
+            hidden={itemType !== 'task'}
+            style={{ flex: 1 }}
+            validateDebounce={300}
+            rules={[{ required: itemType === 'task', message: 'Priority is required' }]}
+          >
+            <Select options={priorityOptions} />
+          </Form.Item>
+        </Flex>
 
         <Form.Item
           name='labelList'
@@ -242,6 +314,16 @@ export const AddItemModal: React.FC = () => {
         </Form.Item>
 
         <Flex gap={'10px'} >
+          <Form.Item name='allDay' hidden={itemType !== 'event'}>
+            <Switch
+              size='default'
+              checkedChildren='All Day'
+              unCheckedChildren='Custom Time'
+              defaultChecked={false}
+              onChange={(value: boolean) => { dispatch(formFieldAllDaySwitched(value)) }}
+            />
+          </Form.Item>
+
           <Form.Item
             name='timeRange'
             hidden={itemType !== 'event' && itemType !== 'task'}
@@ -259,46 +341,24 @@ export const AddItemModal: React.FC = () => {
               style={{ width: '100%' }}
             />
           </Form.Item>
-
-          <Form.Item name='allDay' hidden={itemType !== 'event'}>
-            <Switch
-              size='default'
-              checkedChildren='All Day'
-              unCheckedChildren='Custom Time'
-              defaultChecked={false}
-              onChange={(value: boolean) => { dispatch(formFieldAllDaySwitched(value)) }}
-            />
-          </Form.Item>
         </Flex>
 
-        <Flex gap={'10px'} >
-          <Form.Item
-            name='priority'
-            hidden={itemType !== 'task'}
-            style={{ flex: 1 }}
-            validateDebounce={300}
-            rules={[{ required: itemType === 'task', message: 'Priority is required' }]}
-          >
-            <Select options={priorityOptions} />
-          </Form.Item>
-
-          <Form.Item
-            name='time'
-            hidden={itemType !== 'task' && itemType !== 'reminder'}
-            style={{ flex: 1 }}
-            validateDebounce={300}
-            rules={[{
-              required: itemType === 'reminder',
-              message: 'Time is required'
-            }]}
-          >
-            <TimePicker
-              format='HH:mm'
-              placeholder={itemType === 'task' ? 'Deadline' : 'Remind at'}
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-        </Flex>
+        <Form.Item
+          name='remindAt'
+          hidden={itemType !== 'reminder'}
+          style={{ flex: 1 }}
+          validateDebounce={300}
+          rules={[{
+            required: itemType === 'reminder',
+            message: 'Time is required'
+          }]}
+        >
+          <TimePicker
+            format='HH:mm'
+            placeholder={'Remind at'}
+            style={{ width: '100%' }}
+          />
+        </Form.Item>
 
       </Form>
     </Modal>
