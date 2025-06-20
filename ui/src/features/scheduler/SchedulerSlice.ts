@@ -7,9 +7,12 @@ import {
   fetchItems,
   insertCategory,
   insertItem,
+  isTaskDetails,
   Item,
   ItemEntity,
-  ItemType
+  ItemType,
+  TaskStatus,
+  TodoList
 } from "./SchedulerAPI"
 import ThunkStatus from "../../util/ThunkStatus"
 
@@ -34,6 +37,7 @@ type State = {
   itemModal: {
     open: boolean
     item: ItemEntity | undefined
+    // newItemStatus: TaskStatus | undefined
   }
   categoryModal: {
     open: boolean
@@ -103,6 +107,25 @@ const schedulerSlice = createSlice({
     },
     itemModalOpened: (state, action: PayloadAction<boolean>) => {
       state.itemModal.open = action.payload
+    },
+    itemModalTaskStatusChanged: (state, action: PayloadAction<TaskStatus>) => {
+      if (isTaskDetails(state.itemModal.item?.details)) {
+        state.itemModal.item.details.status = action.payload
+      }
+    },
+    todoValueChanched: (state, action: PayloadAction<TodoList>) => {
+      const updatedTodo = action.payload
+
+      if (isTaskDetails(state.itemModal.item?.details)) {
+        const todoList = state.itemModal.item.details.todoList
+
+        if (todoList) {
+          const index = todoList.findIndex(todo => todo.text === updatedTodo.text)
+          if (index !== -1) {
+            todoList[index] = updatedTodo
+          }
+        }
+      }
     }
   },
   extraReducers(builder) {
@@ -234,7 +257,9 @@ export const {
   formFieldHasTodoListSwitched,
   categoryModalOpened,
   formFieldHasCategorySwitched,
-  insertingCategoryStatusChanged
+  insertingCategoryStatusChanged,
+  itemModalTaskStatusChanged,
+  todoValueChanched
 } = schedulerSlice.actions
 
 export default schedulerSlice.reducer

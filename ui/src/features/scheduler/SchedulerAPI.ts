@@ -41,20 +41,22 @@ export const isItem = (item: unknown): item is Item => {
 export const isTaskDetails = (item: unknown): item is TaskDetails => {
   if (
     typeof item === 'object' && item !== null &&
-    'deadline' in item && typeof item.deadline === 'string' &&
     'completed' in item && typeof item.completed === 'boolean' &&
     'priority' in item && typeof item.priority === 'string'
     && ['low', 'medium', 'high', 'critical'].includes(item.priority) &&
     'status' in item && typeof item.status === 'string' &&
-    ['not_started', 'in_progress', 'waiting', 'canceled', 'done'].includes(item.priority)
+    ['not_started', 'in_progress', 'waiting', 'canceled', 'done'].includes(item.status)
   ) {
     if ('estimatedTime' in item && typeof item.estimatedTime !== 'number') return false
+    if ('deadline' in item && typeof item.deadline !== 'string') return false
     if ('startTime' in item && typeof item.startTime !== 'string') return false
     if ('endTime' in item && typeof item.endTime !== 'string') return false
     if ('todoList' in item && !isTodoList(item.todoList)) return false
+
+    return true
   }
 
-  return true
+  return false
 }
 
 export const isEventDetails = (item: unknown): item is EventDetails => {
@@ -73,12 +75,19 @@ export const isReminderDetails = (item: unknown): item is ReminderDetails => {
   )
 }
 
-const isTodoList = (item: unknown): item is TodoList => {
-  return (
-    typeof item === 'object' && item !== null &&
-    'text' in item && typeof item.text === 'string' &&
-    'done' in item && typeof item.done === 'boolean'
-  )
+const isTodoList = (value: unknown): value is TodoList => {
+  if (!Array.isArray(value)) return false
+
+  return value.every((item) => {
+    if (typeof item !== 'object' || item === null) return false
+
+    const obj = item as Record<string, unknown>
+
+    return (
+      typeof obj.text === 'string' &&
+      typeof obj.done === 'boolean'
+    )
+  })
 }
 
 const isNumberArray = (value: unknown): value is number[] => {
@@ -171,7 +180,7 @@ export type RepeatSettings = {
 }
 
 export type TodoList = {
-  text: string;
+  text: string
   done: boolean
 }
 
