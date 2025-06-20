@@ -58,7 +58,6 @@ const taskStatusOptions = (Object.keys(statusLabels) as TaskStatus[]).map((statu
   value: status
 }))
 
-
 export const ItemModal: React.FC = () => {
   const dispatch = useAppDispatch()
 
@@ -73,11 +72,13 @@ export const ItemModal: React.FC = () => {
   }
 
   const onEdit = () => {
+    
   }
 
   const onDelete = () => {
 
   }
+  
   const onDone = () => {
 
   }
@@ -98,30 +99,71 @@ export const ItemModal: React.FC = () => {
     )
   }
 
-  const renderModalFooter = () => (
-    <Flex justify='end' gap='8px' style={{ marginTop: '30px' }}>
-      <Button key="edit" type="primary" icon={<EditOutlined />} onClick={onEdit}>
-        Edit
-      </Button>
-      <Button key="delete" type="primary" danger icon={<DeleteOutlined />} onClick={onDelete}>
-        Delete
-      </Button>
-      <Button
-        key="done"
-        icon={
-          isTaskDetails(item?.details)
-            ? (statusIcons[item.details.status])
-            : <CheckCircleOutlined />
+  const rendarModalFooterOkButtonText = () => {
+    if (isTaskDetails(item?.details)) {
+      const todoListItems = item.details.todoList
+
+      if (todoListItems && todoListItems.length > 0) {
+        const activeTodos = todoListItems.filter((todo) => !todo.done)
+        const completedTodos = todoListItems.filter((todo) => todo.done)
+
+        if (todoListItems.length === activeTodos.length) {
+          return statusLabels.not_started
+        } else if (todoListItems.length === completedTodos.length) {
+          return statusLabels.done
+        } else {
+          return statusLabels.in_progress
         }
-        onClick={onDone}
-      >
-        {isTaskDetails(item?.details)
-          ? (statusLabels[item.details.status])
-          : 'Done'
+      }
+
+      return statusLabels[item.details.status]
+    }
+
+    return 'Done'
+  }
+
+  const rendarModalFooterOkButtonIcon = () => {
+    if (isTaskDetails(item?.details)) {
+      const todoListItems = item.details.todoList
+
+      if (todoListItems && todoListItems.length > 0) {
+        const activeTodos = todoListItems.filter((todo) => !todo.done)
+        const completedTodos = todoListItems.filter((todo) => todo.done)
+
+        if (todoListItems.length === activeTodos.length) {
+          return statusIcons.not_started
+        } else if (todoListItems.length === completedTodos.length) {
+          return statusIcons.done
+        } else {
+          return statusIcons.in_progress
         }
-      </Button>
-    </Flex>
-  )
+      }
+
+      return statusIcons[item.details.status]
+    }
+
+    return <CheckCircleOutlined />
+  }
+
+  const renderModalFooter = () => {
+    return (
+      <Flex justify='end' gap='8px' style={{ marginTop: '30px' }}>
+        <Button key="edit" type="primary" icon={<EditOutlined />} onClick={onEdit}>
+          Edit
+        </Button>
+        <Button key="delete" type="primary" danger icon={<DeleteOutlined />} onClick={onDelete}>
+          Delete
+        </Button>
+        <Button
+          key="done"
+          icon={rendarModalFooterOkButtonIcon()}
+          onClick={onDone}
+        >
+          {rendarModalFooterOkButtonText()}
+        </Button>
+      </Flex>
+    )
+  }
 
   const renderEventItem = () => {
     if (!isEventDetails(item?.details)) return null
@@ -165,7 +207,7 @@ export const ItemModal: React.FC = () => {
 
         <Flex justify='space-between'>
           <Flex justify='space-between' style={{ flex: '1' }}>
-            <Text style={{ flex: '1'}}>Priority:</Text>
+            <Text style={{ flex: '1' }}>Priority:</Text>
             <Tag >{priority}</Tag>
           </Flex>
 
@@ -195,7 +237,7 @@ export const ItemModal: React.FC = () => {
         <Divider style={{ marginTop: '8px' }} />
 
         <Flex>
-          <Text style={{ flex: '1'}}>Status:</Text>
+          <Text style={{ flex: '1' }}>Status:</Text>
           <Select
             style={{ flex: '1' }}
             placeholder="Select status"
@@ -214,7 +256,7 @@ export const ItemModal: React.FC = () => {
   return (
     item &&
     <Modal
-      title={renderModalTitle(item.color, item.title)}
+      title={renderModalTitle(item.color ?? 'nocolor', item.title)}
       open={open}
       onCancel={onModalCancel}
       footer={renderModalFooter}
