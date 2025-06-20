@@ -10,7 +10,7 @@ import {
 import { Request, Response } from "express"
 import { inject } from "inversify"
 import { TYPES } from "../util/Types.js"
-import { controller, httpGet, httpPost, request, response } from "inversify-express-utils"
+import { controller, httpDelete, httpGet, httpPost, request, response } from "inversify-express-utils"
 import { ItemEntity } from "../model/ItemsEntity.js"
 import { getErrorMessage } from "../util/ErrorUtils.js"
 
@@ -136,7 +136,7 @@ export class ItemsController {
     }
 
     try {
-      const items = await this.itemsService.fetchItems(userId)
+      const items = await this.itemsService.fetch(userId)
       res.status(200).json(items)
     } catch (err) {
       console.error('Failed to fetch items: ', getErrorMessage(err))
@@ -159,10 +159,51 @@ export class ItemsController {
     }
 
     try {
-      const inserted = await this.itemsService.insertItem(request.itemParams, request.userId)
+      const inserted = await this.itemsService.insert(request.itemParams, request.userId)
       res.status(201).json(inserted)
     } catch (err) {
       console.log('Failed to insert item: ', getErrorMessage(err))
+    }
+  }
+
+  @httpPost('/update')
+  public async updateItem(@request() req: Request, @response() res: Response) {
+    const request: unknown = req.body
+
+    if (
+      typeof request !== 'object' || request === null ||
+      !('userId' in request) || typeof request.userId !== 'string' ||
+      !('item' in request) || !isItemEntity(request.item)
+    ) {
+      console.log('Invalid update request format')
+      res.status(400).json({ error: 'Invalid request format' })
+      return
+    }
+
+    try {
+      const updated = await this.itemsService.update(request.item, request.userId)
+      res.status(200).json(updated)
+    } catch (err) {
+      console.log('Failed to update item: ', getErrorMessage(err))
+      res.status(500).json({ error: 'Failed to update item' })
+    }
+  }
+
+  @httpDelete('/delete')
+  public async deleteItem(@request() req: Request, @response() res: Response) {
+    const { id, userId } = req.query
+
+    if (typeof id !== 'string' || typeof userId !== 'string') {
+      res.status(400).json({ error: 'Missing or invalid id or userId query parameter' })
+      return
+    }
+
+    try {
+      await this.itemsService.delete(id, userId)
+      res.status(204).send() 
+    } catch (err) {
+      console.log('Failed to delete item: ', getErrorMessage(err))
+      res.status(500).json({ error: 'Failed to delete item' })
     }
   }
 

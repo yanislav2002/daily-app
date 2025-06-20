@@ -1,12 +1,16 @@
 import { Button, Divider, Flex, Modal, Select, Tag, Typography } from "antd"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import {
+  addItemModalOpened,
   categoriesSelectors,
+  deleteItemAsync,
+  editingItemSet,
   itemModalItemSet,
   itemModalOpened,
   itemModalTaskStatusChanged,
   selectItemModalState,
-  todoValueChanched
+  todoValueChanched,
+  updateItemAsync
 } from "./SchedulerSlice"
 import {
   EditOutlined,
@@ -66,21 +70,34 @@ export const ItemModal: React.FC = () => {
 
   const category = categories.find(c => c.id === item?.categoryId)
 
-  const onModalCancel = () => { //todo maybe add some waiting 200ms
+  const onModalCancel = () => {
     dispatch(itemModalOpened(false))
-    dispatch(itemModalItemSet(undefined))
+
+    setTimeout(() => {
+      dispatch(itemModalItemSet(undefined))
+    }, 200)
   }
 
   const onEdit = () => {
-    
+    dispatch(editingItemSet(item))
+    dispatch(itemModalOpened(false))
+    dispatch(itemModalItemSet(undefined))
+    dispatch(addItemModalOpened(true))
   }
 
-  const onDelete = () => {
-
+  const onDelete = async () => {
+    if (item) {
+      await dispatch(deleteItemAsync(item.id))
+    }
   }
-  
-  const onDone = () => {
 
+  const onDone = async () => {
+    if (item && item.type === 'task') {
+      await dispatch(updateItemAsync(item))
+    }
+
+    dispatch(itemModalOpened(false))
+    dispatch(itemModalItemSet(undefined))
   }
 
   const onToggle = (key: number, checked: boolean) => {

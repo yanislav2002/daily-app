@@ -3,6 +3,7 @@ import { RootState } from "../../app/store"
 import {
   Category,
   CategoryEntity,
+  deleteItem,
   fetchCategories,
   fetchItems,
   insertCategory,
@@ -12,7 +13,7 @@ import {
   ItemEntity,
   ItemType,
   TaskStatus,
-  TodoList
+  updateItem
 } from "./SchedulerAPI"
 import ThunkStatus from "../../util/ThunkStatus"
 
@@ -23,10 +24,13 @@ const categoriesAdapter = createEntityAdapter<CategoryEntity>()
 type State = {
   fetchingItems: ThunkStatus
   insertingItem: ThunkStatus
+  updatingItem: ThunkStatus
+  deletingItem: ThunkStatus
   fetchingCategories: ThunkStatus
   insertingCategory: ThunkStatus
   addItemModal: {
     open: boolean
+    editingItem: ItemEntity | undefined
     fields: {
       itemType: ItemType
       allDay: boolean
@@ -48,10 +52,13 @@ type State = {
 const initialState: State = {
   fetchingItems: { status: "idle" },
   insertingItem: { status: "idle" },
+  updatingItem: { status: "idle" },
+  deletingItem: { status: "idle" },
   fetchingCategories: { status: "idle" },
   insertingCategory: { status: "idle" },
   addItemModal: {
     open: false,
+    editingItem: undefined,
     fields: {
       itemType: 'event',
       allDay: false,
@@ -95,6 +102,12 @@ const schedulerSlice = createSlice({
     insertingItemStatusChanged: (state) => {
       state.insertingItem = { status: 'idle', error: undefined }
     },
+    deletingItemStatusChanged: (state) => {
+      state.deletingItem = { status: 'idle', error: undefined }
+    },
+    updatingItemStatusChanged: (state) => {
+      state.updatingItem = { status: 'idle', error: undefined }
+    },
     insertingCategoryStatusChanged: (state) => {
       state.insertingCategory = { status: 'idle', error: undefined }
     },
@@ -125,6 +138,9 @@ const schedulerSlice = createSlice({
           }
         }
       }
+    },
+    editingItemSet: (state, action: PayloadAction<ItemEntity | undefined>) => {
+      state.addItemModal.editingItem = action.payload
     }
   },
   extraReducers(builder) {
@@ -192,6 +208,44 @@ const schedulerSlice = createSlice({
         state.fetchingCategories.error = '//todo add err'
       })
 
+      .addCase(updateItemAsync.pending, (state) => {
+        state.updatingItem.status = 'loading'
+      })
+      .addCase(updateItemAsync.fulfilled, (state, action) => {
+        const itemEntity = action.payload
+
+        itemsAdapter.updateOne(state.itemsAdapter, {
+          id: itemEntity.id,
+          changes: {
+            ...itemEntity
+          }
+        })
+
+        state.itemModal.open = false
+        state.addItemModal.open = false
+        state.updatingItem.status = 'succeeded'
+      })
+      .addCase(updateItemAsync.rejected, (state) => {
+        state.updatingItem.status = 'failed'
+        state.updatingItem.error = '//todo add err'
+      })
+
+      .addCase(deleteItemAsync.pending, (state) => {
+        state.deletingItem.status = 'loading'
+      })
+      .addCase(deleteItemAsync.fulfilled, (state, action) => {
+        const itemId = action.meta.arg
+
+        itemsAdapter.removeOne(state.itemsAdapter, itemId)
+
+        state.itemModal.open = false
+        state.deletingItem.status = 'succeeded'
+      })
+      .addCase(deleteItemAsync.rejected, (state) => {
+        state.deletingItem.status = 'failed'
+        state.deletingItem.error = '//todo add err'
+      })
+
   }
 })
 
@@ -210,6 +264,26 @@ export const fetchItemsAsync = createAsyncThunk(
     const userId = 'testUser' //todo use real Id
 
     return await fetchItems(userId)
+  }
+)
+
+export const updateItemAsync = createAsyncThunk(
+  'items/updateItem',
+  async (item: ItemEntity) => {
+    const userId = 'testUser' //todo use real Id
+
+    return await updateItem(item, userId)
+  }
+)
+
+export const deleteItemAsync = createAsyncThunk(
+  'items/deleteItem',
+  async (id: string) => {
+    const userId = 'testUser' //todo use real Id
+
+    await deleteItem(id, userId)
+
+    return
   }
 )
 
@@ -234,6 +308,8 @@ export const fetchCategoriesAsync = createAsyncThunk(
 export const selectModalState = (state: RootState) => state.scheduler.addItemModal
 export const selectItemModalState = (state: RootState) => state.scheduler.itemModal
 export const selectInsertingItemState = (state: RootState) => state.scheduler.insertingItem
+export const selectUpdatingItemState = (state: RootState) => state.scheduler.updatingItem
+export const selectDeletingItemState = (state: RootState) => state.scheduler.deletingItem
 export const selectInsertingCategoryState = (state: RootState) => state.scheduler.insertingCategory
 export const selectCategoryModal = (state: RootState) => state.scheduler.categoryModal
 
@@ -258,7 +334,10 @@ export const {
   formFieldHasCategorySwitched,
   insertingCategoryStatusChanged,
   itemModalTaskStatusChanged,
-  todoValueChanched
+  todoValueChanched,
+  deletingItemStatusChanged,
+  updatingItemStatusChanged,
+  editingItemSet
 } = schedulerSlice.actions
 
 export default schedulerSlice.reducer

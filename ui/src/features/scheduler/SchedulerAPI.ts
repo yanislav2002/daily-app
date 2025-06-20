@@ -214,6 +214,30 @@ export const insertItem = async (itemParams: Item, userId: string): Promise<Item
   return res.data
 }
 
+export const updateItem = async (item: ItemEntity, userId: string): Promise<ItemEntity> => {
+  const res = await axios.post('/items/update', { item, userId })
+
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error('Failed to update item')
+  }
+
+  if (!isItemEntity(res.data)) {
+    throw new Error('Invalid Response Data')
+  }
+
+  return res.data
+}
+
+export const deleteItem = async (id: string, userId: string): Promise<void> => {
+  const res = await axios.delete('/items/delete', { params: { id, userId } })
+
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error('Failed to delete item')
+  }
+
+  return
+}
+
 export const insertCategory = async (category: Category, userId: string): Promise<CategoryEntity> => {
   const res = await axios.post('/category/insert', { category, userId })
 

@@ -16,17 +16,20 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import {
   addItemModalOpened,
   categoriesSelectors,
+  editingItemSet,
   formFieldAllDaySwitched,
   formFieldHasCategorySwitched,
   formFieldHasTodoListSwitched,
   insertItemAsync,
   modalItemTypeChanged,
-  selectModalState
+  selectModalState,
+  updateItemAsync
 } from './SchedulerSlice'
-import { Item, ItemType, Priority } from './SchedulerAPI'
-import { Dayjs } from 'dayjs'
+import { isEventDetails, isReminderDetails, isTaskDetails, Item, ItemEntity, ItemType, Priority } from './SchedulerAPI'
+import dayjs, { Dayjs } from 'dayjs'
 import type { Color } from 'antd/es/color-picker'
 import { CheckOutlined, PlusOutlined } from '@ant-design/icons'
+import { useDebugValue, useEffect } from 'react'
 
 
 type FormValues = {
@@ -72,7 +75,11 @@ const priorityOptions = [
   { label: 'Critical', value: 'critical' }
 ]
 
-const transformFormValuesToCalendarItem = (values: FormValues, hasCategory: boolean, categoryColor: string): Item => {
+const transformFormValuesToCalendarItem = (
+  values: FormValues,
+  hasCategory: boolean,
+  categoryColor: string
+): Item => {
   const colorString = typeof values.colorPicker === 'string'
     ? values.colorPicker
     : values.colorPicker.toHexString()
@@ -130,14 +137,85 @@ const transformFormValuesToCalendarItem = (values: FormValues, hasCategory: bool
   }
 }
 
+const transformItemToFormValues = (item: Item): FormValues => {
+  const colorPicker = typeof item.color === 'string' ? item.color : '#f5a623'
+  const category = item.categoryId
+
+  const date = dayjs(item.date, 'DD-MM-YYYY')
+
+  if (item.type === 'task' && isTaskDetails(item.details)) {
+    return {
+      title: item.title,
+      date,
+      description: item.description,
+      itemTypes: 'task',
+      colorPicker,
+      allDay: false,
+      timeRange: item.details.startTime && item.details.endTime
+        ? [dayjs(item.details.startTime, 'HH:mm'), dayjs(item.details.endTime, 'HH:mm')]
+        : undefined,
+      remindAt: undefined,
+      deadline: item.details.deadline ? dayjs(item.details.deadline, 'DD-MM-YYYY HH:mm') : undefined,
+      labelList: item.details.todoList?.map(todo => todo.text) ?? [],
+      priority: item.details.priority,
+      category
+    }
+  }
+
+  if (item.type === 'event' && isEventDetails(item.details)) {
+    return {
+      title: item.title,
+      date,
+      description: item.description,
+      itemTypes: 'event',
+      colorPicker,
+      allDay: item.details.allDay,
+      timeRange: item.details.startTime && item.details.endTime
+        ? [dayjs(item.details.startTime, 'HH:mm'), dayjs(item.details.endTime, 'HH:mm')]
+        : undefined,
+      remindAt: undefined,
+      deadline: undefined,
+      labelList: [],
+      priority: 'low',
+      category
+    }
+  }
+
+  if (item.type === 'reminder' && isReminderDetails(item.details)) {
+    return {
+      title: item.title,
+      date,
+      description: item.description,
+      itemTypes: 'reminder',
+      colorPicker,
+      allDay: false,
+      timeRange: undefined,
+      remindAt: item.details.remindAt ? dayjs(item.details.remindAt, 'HH:mm') : undefined,
+      deadline: undefined,
+      labelList: [],
+      priority: 'low',
+      category
+    }
+  }
+
+  throw new Error('Unsupported item details type')
+}
+
 export const AddItemModal: React.FC = () => {
   const dispatch = useAppDispatch()
 
   const categories = useAppSelector(categoriesSelectors.selectAll)
-  const { open, fields } = useAppSelector(selectModalState)
+  const { open, fields, editingItem } = useAppSelector(selectModalState)
   const { itemType, allDay, hasTodoList, hasCategory } = fields
 
   const [form] = Form.useForm<FormValues>()
+
+  useEffect(() => {
+    if (editingItem) {
+      dispatch(modalItemTypeChanged(editingItem.type))
+      form.setFieldsValue(transformItemToFormValues(editingItem))
+    }
+  }, [dispatch, editingItem, form])
 
   const categoryOptions = categories.map(category => ({
     value: category.id,
@@ -152,10 +230,15 @@ export const AddItemModal: React.FC = () => {
   const onFinish = async (values: FormValues) => {
     try {
       const category = categories.find(cat => cat.id === values.category)
-
       const item = transformFormValuesToCalendarItem(values, hasCategory, category?.color ?? '')
 
-      await dispatch(insertItemAsync(item))
+      if (editingItem) {
+        const itemEntity: ItemEntity = { ...item, id: editingItem.id, userId: editingItem.userId }
+
+        await dispatch(updateItemAsync(itemEntity))
+      } else {
+        await dispatch(insertItemAsync(item))
+      }
     } catch (err: unknown) {
       console.log(err)
       return
@@ -164,6 +247,7 @@ export const AddItemModal: React.FC = () => {
 
   const resetFormAndState = () => {
     form.resetFields()
+    dispatch(editingItemSet(undefined))
     dispatch(modalItemTypeChanged('event'))
     dispatch(formFieldHasCategorySwitched(false))
     dispatch(formFieldHasTodoListSwitched(false))
@@ -190,11 +274,11 @@ export const AddItemModal: React.FC = () => {
 
   return (
     <Modal
-      title='Add Activity'
+      title={editingItem ? 'Edit Activity' : 'Add Activity'}
       open={open}
       onCancel={onModalCancel}
       onOk={onModalSubmit}
-      okText='Add'
+      okText={editingItem ? 'Save' : 'Add'}
       destroyOnHidden
     >
       <Form

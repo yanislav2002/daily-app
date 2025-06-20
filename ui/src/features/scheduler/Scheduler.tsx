@@ -12,7 +12,11 @@ import {
   categoryModalOpened,
   selectInsertingItemState,
   selectInsertingCategoryState,
-  insertingCategoryStatusChanged
+  insertingCategoryStatusChanged,
+  selectDeletingItemState,
+  deletingItemStatusChanged,
+  selectUpdatingItemState,
+  updatingItemStatusChanged
 } from "./SchedulerSlice"
 import { AddItemModal } from "./AddItemModal"
 import { useEffect } from "react"
@@ -29,6 +33,8 @@ export const Scheduler: React.FC = () => {
   const allItems = useAppSelector(itemsSelectors.selectAll)
   const insertingItems = useAppSelector(selectInsertingItemState)
   const insertingCategory = useAppSelector(selectInsertingCategoryState)
+  const deletingItem = useAppSelector(selectDeletingItemState)
+  const updatingItem = useAppSelector(selectUpdatingItemState)
 
   const [api, contextHolder] = notification.useNotification()
 
@@ -77,6 +83,42 @@ export const Scheduler: React.FC = () => {
       dispatch(insertingItemStatusChanged())
     }
 
+    if (updatingItem.status === 'succeeded') {
+      api.success({
+        message: 'Success',
+        description: 'Item updated successfully!',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(updatingItemStatusChanged())
+    } else if (updatingItem.status === 'failed') {
+      api.error({
+        message: 'Error',
+        description: 'Failed to update item. Please try again.',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(updatingItemStatusChanged())
+    }
+
+    if (deletingItem.status === 'succeeded') {
+      api.success({
+        message: 'Success',
+        description: 'Item deleted successfully!',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(deletingItemStatusChanged())
+    } else if (deletingItem.status === 'failed') {
+      api.error({
+        message: 'Error',
+        description: 'Failed to delete item. Please try again.',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(deletingItemStatusChanged())
+    }
+
     if (insertingCategory.status === 'succeeded') {
       api.success({
         message: 'Success',
@@ -94,7 +136,14 @@ export const Scheduler: React.FC = () => {
       })
       dispatch(insertingCategoryStatusChanged())
     }
-  }, [insertingItems.status, api, dispatch, insertingCategory.status])
+  }, [
+    insertingItems.status,
+    api,
+    dispatch,
+    insertingCategory.status,
+    deletingItem.status,
+    updatingItem.status
+  ])
 
   const dateCellRender = (value: Dayjs) => {
     const itemsForDay = allItems.filter(item =>

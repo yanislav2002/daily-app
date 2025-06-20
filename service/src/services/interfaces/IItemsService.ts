@@ -52,6 +52,8 @@ export type TodoList = {
 }
 
 export type IItemsService = {
-  fetchItems(userId: string): Promise<ItemEntity[]>
-  insertItem(item: Item, userId: string): Promise<ItemEntity>
+  fetch(userId: string): Promise<ItemEntity[]>
+  insert(item: Item, userId: string): Promise<ItemEntity>
+  update(item: ItemEntity, userId: string): Promise<ItemEntity>
+  delete(id: string, userId: string): Promise<void>
 }
