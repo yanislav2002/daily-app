@@ -32,6 +32,7 @@ const TaskDetailsSchema = new mongoose.Schema({
   status: { type: String, required: true, enum: ['not_started', 'in_progress', 'waiting', 'canceled', 'done'] },
   todoList: [
     {
+      key: { type: Number, required: true },
       text: { type: String, required: true },
       done: { type: Boolean, default: false }
     }

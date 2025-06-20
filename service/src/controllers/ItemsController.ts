@@ -98,6 +98,7 @@ const isTodoList = (value: unknown): value is TodoList => {
     const obj = item as Record<string, unknown>
 
     return (
+      typeof obj.key === 'number' &&
       typeof obj.text === 'string' &&
       typeof obj.done === 'boolean'
     )

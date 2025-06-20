@@ -82,9 +82,9 @@ export const ItemModal: React.FC = () => {
 
   }
 
-  const onToggle = (index: string, checked: boolean) => {
-    console.log(index, checked)
-    dispatch(todoValueChanched({ text: index, done: checked }))
+  const onToggle = (key: number, checked: boolean) => {
+    console.log(key, checked)
+    dispatch(todoValueChanched({ key, checked }))
   }
 
   const renderModalTitle = (itemColor: string, itemTitle: string) => {

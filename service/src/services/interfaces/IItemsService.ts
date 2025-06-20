@@ -46,7 +46,8 @@ export type RepeatSettings = {
 }
 
 export type TodoList = {
-  text: string;
+  key: number
+  text: string
   done: boolean
 }
 

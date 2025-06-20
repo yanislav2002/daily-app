@@ -84,6 +84,7 @@ const isTodoList = (value: unknown): value is TodoList => {
     const obj = item as Record<string, unknown>
 
     return (
+      typeof obj.key === 'number' &&
       typeof obj.text === 'string' &&
       typeof obj.done === 'boolean'
     )
@@ -180,6 +181,7 @@ export type RepeatSettings = {
 }
 
 export type TodoList = {
+  key: number
   text: string
   done: boolean
 }

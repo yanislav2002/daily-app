@@ -5,13 +5,14 @@ import { Typography } from "antd"
 const { Paragraph, Text } = Typography
 
 type TodoList = {
+  key: number
   text: string
   done: boolean
 };
 
 type Props = {
   todoList?: TodoList[]
-  onToggle?: (index: string, toggle: boolean) => void
+  onToggle?: (key: number, checked: boolean) => void
 }
 
 export const CustomCheckList: React.FC<Props> = ({ todoList, onToggle }) => {
@@ -36,7 +37,7 @@ export const CustomCheckList: React.FC<Props> = ({ todoList, onToggle }) => {
                   <List.Item style={{ padding: '4px 0' }}>
                     <Checkbox
                       checked={todo.done}
-                      onChange={(e: CheckboxChangeEvent) => onToggle?.(todo.text, e.target.checked)}
+                      onChange={(e: CheckboxChangeEvent) => onToggle?.(todo.key, e.target.checked)}
                     >
                       <Text>{todo.text}</Text>
                     </Checkbox>
@@ -68,7 +69,7 @@ export const CustomCheckList: React.FC<Props> = ({ todoList, onToggle }) => {
                           <Checkbox
                             checked={todo.done}
                             onChange={(e: CheckboxChangeEvent) =>
-                              onToggle?.(todo.text, e.target.checked)
+                              onToggle?.(todo.key, e.target.checked)
                             }
                           >
                             <Text type="secondary" delete>

@@ -37,7 +37,6 @@ type State = {
   itemModal: {
     open: boolean
     item: ItemEntity | undefined
-    // newItemStatus: TaskStatus | undefined
   }
   categoryModal: {
     open: boolean
@@ -113,16 +112,16 @@ const schedulerSlice = createSlice({
         state.itemModal.item.details.status = action.payload
       }
     },
-    todoValueChanched: (state, action: PayloadAction<TodoList>) => {
+    todoValueChanched: (state, action: PayloadAction<{ key: number, checked: boolean }>) => {
       const updatedTodo = action.payload
 
       if (isTaskDetails(state.itemModal.item?.details)) {
         const todoList = state.itemModal.item.details.todoList
 
         if (todoList) {
-          const index = todoList.findIndex(todo => todo.text === updatedTodo.text)
+          const index = todoList.findIndex(todo => todo.key === updatedTodo.key)
           if (index !== -1) {
-            todoList[index] = updatedTodo
+            todoList[index] = { ...todoList[index], done: updatedTodo.checked }
           }
         }
       }

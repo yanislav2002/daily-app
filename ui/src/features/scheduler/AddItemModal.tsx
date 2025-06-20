@@ -98,7 +98,7 @@ const transformFormValuesToCalendarItem = (values: FormValues, hasCategory: bool
           status: 'not_started',
           startTime: values.timeRange?.[0].format('HH:mm') ?? undefined,
           endTime: values.timeRange?.[1].format('HH:mm') ?? undefined,
-          todoList: values.labelList.map(label => ({ text: label, done: false })),
+          todoList: values.labelList.map((label, index) => ({ key: index, text: label, done: false })),
           estimatedTime: undefined //todo
         }
       }
