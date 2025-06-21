@@ -1,4 +1,4 @@
-import { Button, Calendar, CalendarProps, Flex, notification, Select, Space, Tag } from "antd"
+import { Button, Calendar, CalendarProps, Flex, notification, Select, Tag } from "antd"
 import type { Dayjs } from 'dayjs'
 import dayjs from "dayjs"
 import '../../../public/CustomCalendar.css'
@@ -16,7 +16,9 @@ import {
   selectDeletingItemState,
   deletingItemStatusChanged,
   selectUpdatingItemState,
-  updatingItemStatusChanged
+  updatingItemStatusChanged,
+  filtersSelectors,
+  filtersUpdated
 } from "./SchedulerSlice"
 import { AddItemModal } from "./AddItemModal"
 import { useEffect } from "react"
@@ -25,12 +27,12 @@ import { ItemModal } from "./ItemModal"
 import { CategoryModal } from "./CategoryModal"
 
 
-const { Option } = Select
-
 export const Scheduler: React.FC = () => {
   const dispatch = useAppDispatch()
 
   const allItems = useAppSelector(itemsSelectors.selectAll)
+  const filters = useAppSelector(filtersSelectors.selectAll)
+
   const insertingItems = useAppSelector(selectInsertingItemState)
   const insertingCategory = useAppSelector(selectInsertingCategoryState)
   const deletingItem = useAppSelector(selectDeletingItemState)
@@ -38,7 +40,27 @@ export const Scheduler: React.FC = () => {
 
   const [api, contextHolder] = notification.useNotification()
 
-  const getTagStyleByType = (type: ItemType): React.CSSProperties => {
+  const selectedFilters = filters.filter(filter => filter.isSelected).map(f => f.id)
+  const filtersWithItemType = filters.filter(f => f.itemType)
+  const filtersWithoutItemType = filters.filter(f => !f.itemType)
+  const filterOptions = [
+    {
+      label: 'Item Types',
+      options: filtersWithItemType.map(f => ({
+        label: f.label,
+        value: f.id
+      }))
+    },
+    {
+      label: 'Categories',
+      options: filtersWithoutItemType.map(f => ({
+        label: f.label,
+        value: f.id
+      }))
+    }
+  ]
+
+  const getTagStyleByType = (type: ItemType) => {
     switch (type) {
       case 'task':
         return {
@@ -146,8 +168,14 @@ export const Scheduler: React.FC = () => {
   ])
 
   const dateCellRender = (value: Dayjs) => {
+    const activeFilterTypes = filters
+      .filter(f => f.isSelected)
+      .map(f => f.id)
+
     const itemsForDay = allItems.filter(item =>
-      dayjs(item.date, 'DD-MM-YYYY').isSame(value, 'day')
+      dayjs(item.date, 'DD-MM-YYYY').isSame(value, 'day') &&
+      activeFilterTypes.includes(item.type) &&
+      (item.categoryId ? activeFilterTypes.includes(item.categoryId) : true)
     )
 
     return (
@@ -194,24 +222,34 @@ export const Scheduler: React.FC = () => {
       <ItemModal />
       <CategoryModal />
 
-      <Space wrap>
-        <Select placeholder="Select option" style={{ width: 200 }}>
-          <Option value="option1">Option 1</Option>
-          <Option value="option2">Option 2</Option>
+      <Flex gap='10px' style={{ width: '80vw' }}>
+        <Select
+          placeholder="Filter"
+          mode='multiple'
+          maxTagCount='responsive'
+          allowClear
+          style={{ flex: 1 }}
+          options={filterOptions}
+          value={selectedFilters}
+          onChange={(selectedIds) => {
+            dispatch(filtersUpdated(selectedIds))
+          }}
+        >
+
         </Select>
 
-        <Button onClick={() => dispatch(addItemModalOpened(true))}>Add Item</Button>
+        <Button onClick={() => dispatch(addItemModalOpened(true))}>Add Activity</Button>
 
         <Button >Add Tasks</Button>
 
         <Button onClick={() => dispatch(categoryModalOpened(true))}>Create Category</Button>
-      </Space>
+      </Flex>
 
       <Flex
         justify="center"
         style={{
           width: '80vw',
-          height: '85vh',
+          height: '100vh',
           overflow: 'auto',
           padding: 16,
           background: 'white',

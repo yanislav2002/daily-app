@@ -11,7 +11,7 @@ import {
   SettingOutlined
 } from '@ant-design/icons'
 import { Scheduler } from './features/scheduler/Scheduler'
-import { fetchCategoriesAsync, fetchItemsAsync } from './features/scheduler/SchedulerSlice'
+import { fetchCategoriesAsync, fetchItemsAsync, filtersInitialSet } from './features/scheduler/SchedulerSlice'
 import { useAppDispatch } from './app/hooks'
 
 
@@ -66,6 +66,7 @@ const App = () => {
       try {
         await dispatch(fetchItemsAsync())
         await dispatch(fetchCategoriesAsync())
+        dispatch(filtersInitialSet())
       } catch (error) {
         console.log('Failed to fetch items', error)
       }
@@ -108,7 +109,7 @@ const App = () => {
         />
       </Sider>
       <Content style={{
-        backgroundColor: '#1e1e1e',
+        // backgroundColor: '#1e1e1e',
         color: 'white',
         flex: 1,
         height: '100vh',

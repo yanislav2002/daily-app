@@ -20,6 +20,14 @@ import ThunkStatus from "../../util/ThunkStatus"
 
 const itemsAdapter = createEntityAdapter<ItemEntity>()
 const categoriesAdapter = createEntityAdapter<CategoryEntity>()
+const filtersAdapter = createEntityAdapter<FilterOption>()
+
+type FilterOption = {
+  id: string
+  label: string
+  isSelected: boolean
+  itemType?: ItemType
+}
 
 type State = {
   fetchingItems: ThunkStatus
@@ -45,6 +53,7 @@ type State = {
   categoryModal: {
     open: boolean
   }
+  filtersAdapter: EntityState<FilterOption, string>
   itemsAdapter: EntityState<ItemEntity, string>
   categoriesAdapter: EntityState<CategoryEntity, string>
 }
@@ -73,6 +82,7 @@ const initialState: State = {
   categoryModal: {
     open: false
   },
+  filtersAdapter: filtersAdapter.getInitialState(),
   itemsAdapter: itemsAdapter.getInitialState(),
   categoriesAdapter: categoriesAdapter.getInitialState()
 }
@@ -141,6 +151,35 @@ const schedulerSlice = createSlice({
     },
     editingItemSet: (state, action: PayloadAction<ItemEntity | undefined>) => {
       state.addItemModal.editingItem = action.payload
+    },
+    filtersInitialSet: (state) => {
+      const mappedItemTypes = [
+        { label: 'Event', id: 'event', isSelected: true, itemType: 'event' },
+        { label: 'Task', id: 'task', isSelected: true, itemType: 'task' },
+        { label: 'Reminder', id: 'reminder', isSelected: true, itemType: 'reminder' }
+      ]
+
+      const categories = categoriesAdapter.getSelectors().selectAll(state.categoriesAdapter)
+
+      const mappedCategories = categories.map(cat => ({ label: cat.name, id: cat.id, isSelected: true }))
+
+      const filters: FilterOption[] = [...mappedItemTypes, ...mappedCategories]
+
+      filtersAdapter.addMany(state.filtersAdapter, filters)
+    },
+    filtersUpdated: (state, action: PayloadAction<string[]>) => {
+      const selectedIds = new Set(action.payload)
+
+      const allFilters = filtersAdapter.getSelectors().selectAll(state.filtersAdapter)
+
+      allFilters.forEach(filter => {
+        const isSelected = selectedIds.has(filter.id)
+
+        filtersAdapter.updateOne(state.filtersAdapter, {
+          id: filter.id,
+          changes: { isSelected }
+        })
+      })
     }
   },
   extraReducers(builder) {
@@ -183,6 +222,12 @@ const schedulerSlice = createSlice({
         const categoryEntity = action.payload
 
         categoriesAdapter.setOne(state.categoriesAdapter, categoryEntity)
+
+        filtersAdapter.setOne(state.filtersAdapter, {
+          id: categoryEntity.id,
+          label: categoryEntity.name,
+          isSelected: true
+        })
 
         state.categoryModal.open = false
         state.insertingCategory.status = 'succeeded'
@@ -321,6 +366,10 @@ export const categoriesSelectors = categoriesAdapter.getSelectors(
   (state: RootState) => state.scheduler.categoriesAdapter
 )
 
+export const filtersSelectors = filtersAdapter.getSelectors(
+  (state: RootState) => state.scheduler.filtersAdapter
+)
+
 export const {
   addItemModalOpened,
   modalItemTypeChanged,
@@ -337,7 +386,9 @@ export const {
   todoValueChanched,
   deletingItemStatusChanged,
   updatingItemStatusChanged,
-  editingItemSet
+  editingItemSet,
+  filtersInitialSet,
+  filtersUpdated
 } = schedulerSlice.actions
 
 export default schedulerSlice.reducer
