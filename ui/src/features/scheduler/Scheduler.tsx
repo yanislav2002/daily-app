@@ -1,4 +1,4 @@
-import { Button, Calendar, CalendarProps, Flex, notification, Select, Tag } from "antd"
+import { Button, Calendar, CalendarProps, Flex, notification, Select, Splitter, Tag } from "antd"
 import type { Dayjs } from 'dayjs'
 import dayjs from "dayjs"
 import '../../../public/CustomCalendar.css'
@@ -25,6 +25,7 @@ import { useEffect } from "react"
 import { ItemEntity, ItemType } from "./SchedulerAPI"
 import { ItemModal } from "./ItemModal"
 import { CategoryModal } from "./CategoryModal"
+import { DayView } from "../../util/components/DayView"
 
 
 export const Scheduler: React.FC = () => {
@@ -222,7 +223,7 @@ export const Scheduler: React.FC = () => {
       <ItemModal />
       <CategoryModal />
 
-      <Flex gap='10px' style={{ width: '80vw' }}>
+      <Flex gap='10px' style={{ width: '90vw' }}>
         <Select
           placeholder="Filter"
           mode='multiple'
@@ -245,22 +246,34 @@ export const Scheduler: React.FC = () => {
         <Button onClick={() => dispatch(categoryModalOpened(true))}>Create Category</Button>
       </Flex>
 
-      <Flex
-        justify="center"
-        style={{
-          width: '80vw',
-          height: '100vh',
-          overflow: 'auto',
-          padding: 16,
-          background: 'white',
-          borderRadius: 8
-        }}>
-        <Calendar
-          fullscreen
-          style={{ border: '2px solid #f0f0f0' }}
-          cellRender={cellRender}
-        />
-      </Flex>
+      <Splitter style={{ height: '100vh', overflow: 'hidden', width: '90vw' }}>
+        <Splitter.Panel
+          defaultSize="80%" min="70%" max="80%"
+          style={{
+            overflow: 'auto',
+            borderRadius: 8
+          }}
+        >
+          <Calendar
+            fullscreen
+            style={{ border: '2px solid #f0f0f0' }}
+            cellRender={cellRender}
+          />
+        </Splitter.Panel>
+
+        <Splitter.Panel
+          collapsible
+          defaultSize="20%" min="15%" max="30%"
+          style={{
+            overflow: 'auto',
+            background: 'white'
+          }}
+        >
+          <DayView
+            calendarItems={allItems}
+          />
+        </Splitter.Panel>
+      </Splitter>
     </Flex>
   )
 }
