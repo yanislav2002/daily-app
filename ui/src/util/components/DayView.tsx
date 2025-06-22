@@ -1,9 +1,11 @@
 import React from 'react'
-import { Typography, Card, Tag, Flex } from 'antd'
+import { Typography, Card, Flex } from 'antd'
 import { isEventDetails, isTaskDetails, ItemEntity } from '../../features/scheduler/SchedulerAPI'
+import { useAppDispatch } from '../../app/hooks'
+import { itemModalItemSet, itemModalOpened } from '../../features/scheduler/SchedulerSlice'
 
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 type CalendarItem = {
   id: string
@@ -15,15 +17,8 @@ type CalendarItem = {
 }
 
 type Props = {
-  calendarItems: ItemEntity[]
+  calendarItems: ItemEntity[] | undefined
 }
-
-const calendarItems: CalendarItem[] = [
-  { id: '1', title: 'Daily Standup', start: '09:15', end: '09:45', color: '#0D1B2A' },
-  { id: '2', title: 'Code Review', start: '10:00', end: '11:30', color: '#FF8500' },
-  { id: '3', title: 'Design Sync', start: '14:45', end: '16:15', color: '#1A73E8' },
-  { id: '4', title: 'All-Day Event', start: '00:00', end: '23:59', allDay: true, color: '#8E44AD' },
-]
 
 const timeToMinutes = (time: string) => {
   const [h, m] = time.split(':').map(Number)
@@ -33,8 +28,17 @@ const timeToMinutes = (time: string) => {
 const ROW_HEIGHT = 16
 
 export const DayView: React.FC<Props> = ({ calendarItems }) => {
+  const dispatch = useAppDispatch()
+
+  if (!calendarItems) return null
+
   const allDayEvents = calendarItems.filter(i => i.allDay)
   const timedItems = calendarItems.filter(i => !i.allDay)
+
+  const onItemOpen = (item: ItemEntity) => {
+    dispatch(itemModalItemSet(item))
+    dispatch(itemModalOpened(true))
+  }
 
   const renderCardItems = (items: ItemEntity[]) => {
     return items.map(event => {
@@ -49,7 +53,13 @@ export const DayView: React.FC<Props> = ({ calendarItems }) => {
           <Card
             key={event.id}
             size="small"
+            styles={{
+              body: {
+                padding: '5px 5px 5px 10px'
+              }
+            }}
             style={{
+              padding: 0,
               position: 'absolute',
               top,
               left: 8,
@@ -60,11 +70,17 @@ export const DayView: React.FC<Props> = ({ calendarItems }) => {
               border: 'none',
               borderRadius: 6,
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              cursor: 'pointer'
             }}
+            onClick={() => { onItemOpen(event) }}
           >
-            <Text strong style={{ color: '#fff' }}>{event.title}</Text>
-            <br />
-            <Text style={{ fontSize: 12, color: '#eee' }}>{event.details.startTime}-{event.details.endTime}</Text>
+            {height >= 32 && <Flex gap='5px'>
+              <Text style={{ color: '#fff' }} strong > {event.title}</Text>
+              <Text style={{ color: '#fff' }}>
+                {`(${event.details.startTime ?? 'All Day'}-${event.details.endTime ?? ''})`}
+              </Text>
+            </Flex>
+            }
           </Card>
         )
       }
@@ -85,8 +101,11 @@ export const DayView: React.FC<Props> = ({ calendarItems }) => {
         </Card>
       )} */}
 
-      <div style={{ position: 'relative', display: 'flex', borderTop: '1px solid #ddd' }}>
-        {/* Time Labels */}
+      <div
+        style={{
+          position: 'relative', display: 'flex', borderTop: '1px solid #ddd'
+        }}
+      >
         <div style={{ width: 30 }}>
           {Array.from({ length: 96 }).map((_, i) => {
             const hour = Math.floor(i / 4)
@@ -119,7 +138,7 @@ export const DayView: React.FC<Props> = ({ calendarItems }) => {
               key={i}
               style={{
                 height: ROW_HEIGHT,
-                borderBottom: '1px dashed #eee',
+                borderBottom: '1px dashed #eee'
               }}
             />
           ))}

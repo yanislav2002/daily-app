@@ -18,18 +18,26 @@ import {
   selectUpdatingItemState,
   updatingItemStatusChanged,
   filtersSelectors,
-  filtersUpdated
+  filtersUpdated,
+  selectLeyout,
+  calendarSelectedDateSet,
+  selectSelectedCalendarDate
 } from "./SchedulerSlice"
 import { AddItemModal } from "./AddItemModal"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { ItemEntity, ItemType } from "./SchedulerAPI"
 import { ItemModal } from "./ItemModal"
 import { CategoryModal } from "./CategoryModal"
 import { DayView } from "../../util/components/DayView"
+import { SIDER_COLLAPSED_WIDTH, SIDER_WIDTH } from "../../App"
 
 
 export const Scheduler: React.FC = () => {
   const dispatch = useAppDispatch()
+
+  const { siderCollapsed } = useAppSelector(selectLeyout)
+
+  const PAGE_WIDTH = `calc(100vw-${siderCollapsed ? SIDER_COLLAPSED_WIDTH : SIDER_WIDTH})`
 
   const allItems = useAppSelector(itemsSelectors.selectAll)
   const filters = useAppSelector(filtersSelectors.selectAll)
@@ -38,6 +46,9 @@ export const Scheduler: React.FC = () => {
   const insertingCategory = useAppSelector(selectInsertingCategoryState)
   const deletingItem = useAppSelector(selectDeletingItemState)
   const updatingItem = useAppSelector(selectUpdatingItemState)
+  const { date } = useAppSelector(selectSelectedCalendarDate)
+
+  const currentDateItems = allItems.filter(item => item.date === date)
 
   const [api, contextHolder] = notification.useNotification()
 
@@ -86,6 +97,17 @@ export const Scheduler: React.FC = () => {
     dispatch(itemModalItemSet(item))
     dispatch(itemModalOpened(true))
   }
+
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el) {
+      const scrollToHour = 8
+      const scrollTop = (scrollToHour * 60 / 15) * 16
+      el.scrollTop = scrollTop
+    }
+  }, [])
 
   useEffect(() => {
     if (insertingItems.status === 'succeeded') {
@@ -168,6 +190,12 @@ export const Scheduler: React.FC = () => {
     updatingItem.status
   ])
 
+  const onDateSelect = (date: Dayjs) => {
+    const formattedDate = dayjs(date).format('DD-MM-YYYY')
+
+    dispatch(calendarSelectedDateSet({ date: formattedDate }))
+  }
+
   const dateCellRender = (value: Dayjs) => {
     const activeFilterTypes = filters
       .filter(f => f.isSelected)
@@ -216,14 +244,14 @@ export const Scheduler: React.FC = () => {
   }
 
   return (
-    <Flex vertical align='center' gap={20} style={{ width: '100%', height: '100vh', padding: '20px' }} >
+    <Flex vertical align='center' gap={20} style={{ width: PAGE_WIDTH, height: '100vh', padding: '20px' }} >
       {contextHolder}
 
       <AddItemModal />
       <ItemModal />
       <CategoryModal />
 
-      <Flex gap='10px' style={{ width: '90vw' }}>
+      <Flex gap='10px' style={{ width: '100%' }}>
         <Select
           placeholder="Filter"
           mode='multiple'
@@ -239,14 +267,14 @@ export const Scheduler: React.FC = () => {
 
         </Select>
 
-        <Button onClick={() => dispatch(addItemModalOpened(true))}>Add Activity</Button>
+        <Button type='primary' onClick={() => dispatch(addItemModalOpened(true))}>Add Activity</Button>
 
-        <Button >Add Tasks</Button>
+        <Button type='primary'>Add Tasks</Button>
 
-        <Button onClick={() => dispatch(categoryModalOpened(true))}>Create Category</Button>
+        <Button type='primary' onClick={() => dispatch(categoryModalOpened(true))}>Create Category</Button>
       </Flex>
 
-      <Splitter style={{ height: '100vh', overflow: 'hidden', width: '90vw' }}>
+      <Splitter style={{ height: '100vh', overflow: 'hidden', width: '100%' }}>
         <Splitter.Panel
           defaultSize="80%" min="70%" max="80%"
           style={{
@@ -255,23 +283,28 @@ export const Scheduler: React.FC = () => {
           }}
         >
           <Calendar
-            fullscreen
             style={{ border: '2px solid #f0f0f0' }}
             cellRender={cellRender}
+            onSelect={onDateSelect}
           />
         </Splitter.Panel>
 
         <Splitter.Panel
           collapsible
-          defaultSize="20%" min="15%" max="30%"
+          defaultSize="20%"
+          min="15%"
+          max="30%"
           style={{
-            overflow: 'auto',
+            overflow: 'hidden',
             background: 'white'
           }}
         >
-          <DayView
-            calendarItems={allItems}
-          />
+          <Flex
+            ref={scrollRef}
+            style={{ height: '100%', overflowY: 'auto' }}
+          >
+            <DayView calendarItems={currentDateItems} />
+          </Flex>
         </Splitter.Panel>
       </Splitter>
     </Flex>

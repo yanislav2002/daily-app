@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import './App.css'
 import { Menu, Layout, Space, Image } from 'antd'
 import {
@@ -11,11 +11,23 @@ import {
   SettingOutlined
 } from '@ant-design/icons'
 import { Scheduler } from './features/scheduler/Scheduler'
-import { fetchCategoriesAsync, fetchItemsAsync, filtersInitialSet } from './features/scheduler/SchedulerSlice'
-import { useAppDispatch } from './app/hooks'
+import {
+  fetchCategoriesAsync,
+  fetchItemsAsync,
+  filtersInitialSet,
+  menuKeySelected,
+  selectLeyout,
+  siderCollapseSet
+} from './features/scheduler/SchedulerSlice'
+import { useAppDispatch, useAppSelector } from './app/hooks'
 
 
 const { Sider, Content } = Layout
+
+export const SIDER_WIDTH = '250px'
+export const SIDER_COLLAPSED_WIDTH = '50px'
+const ICON_WIDTH = '80px'
+const ICON_COLLAPSED_WIDTH = '50px'
 
 const items = [
   {
@@ -58,8 +70,7 @@ const items = [
 const App = () => {
   const dispatch = useAppDispatch()
 
-  const [selectedKey, setSelectedKey] = useState('1') //todo remove useState
-  const [collapsed, setCollapsed] = useState(false) //todo remove useState
+  const { siderCollapsed, selectedMenuKey } = useAppSelector(selectLeyout)
 
   useEffect(() => {
     const onLoad = async () => {
@@ -93,29 +104,32 @@ const App = () => {
   return (
     <Layout style={{ minHeight: '100vh', minWidth: '100vw' }}>
       <Sider
+        style={{
+          backgroundColor: '#33658a'
+        }}
         collapsible
-        collapsed={collapsed}
-        onCollapse={setCollapsed}
-        width={260}
+        collapsed={siderCollapsed}
+        onCollapse={(val: boolean) => dispatch(siderCollapseSet(val))}
+        width={SIDER_WIDTH}
+        collapsedWidth={SIDER_COLLAPSED_WIDTH}
       >
-        <Space >
-          <Image src='/logo.png' width='80px' preview={false} />
+        <Space>
+          <Image src='/logo.png' width={siderCollapsed ? ICON_COLLAPSED_WIDTH : ICON_WIDTH} preview={false} />
         </Space>
         <Menu
           mode="inline"
-          selectedKeys={[selectedKey]}
-          onClick={(e) => { setSelectedKey(e.key) }}
+          selectedKeys={[selectedMenuKey]}
+          onClick={(e) => { dispatch(menuKeySelected(e.key)) }}
           items={items}
         />
       </Sider>
       <Content style={{
-        // backgroundColor: '#1e1e1e',
-        color: 'white',
+        background: 'radial-gradient(circle, #ffffff, #f9f9f9, #f4f4f4, #eeeeee, #e9e9e9)',
         flex: 1,
         height: '100vh',
         overflow: 'auto'
       }}>
-        {renderContent(selectedKey)}
+        {renderContent(selectedMenuKey)}
       </Content>
     </Layout>
   )

@@ -53,6 +53,13 @@ type State = {
   categoryModal: {
     open: boolean
   }
+  layout: { //todo remove it hrom this slica create separate
+    siderCollapsed: boolean
+    selectedMenuKey: string
+  }
+  calendarSelectedDate: {
+    date: string | undefined
+  }
   filtersAdapter: EntityState<FilterOption, string>
   itemsAdapter: EntityState<ItemEntity, string>
   categoriesAdapter: EntityState<CategoryEntity, string>
@@ -82,9 +89,16 @@ const initialState: State = {
   categoryModal: {
     open: false
   },
+  calendarSelectedDate: {
+    date: undefined
+  },
   filtersAdapter: filtersAdapter.getInitialState(),
   itemsAdapter: itemsAdapter.getInitialState(),
-  categoriesAdapter: categoriesAdapter.getInitialState()
+  categoriesAdapter: categoriesAdapter.getInitialState(),
+  layout: { //todo remove
+    siderCollapsed: false,
+    selectedMenuKey: '1'
+  }
 }
 
 const schedulerSlice = createSlice({
@@ -180,6 +194,19 @@ const schedulerSlice = createSlice({
           changes: { isSelected }
         })
       })
+    },
+    menuKeySelected: (state, action: PayloadAction<string>) => {
+      state.layout.selectedMenuKey = action.payload
+    },
+    siderCollapseSet: (state, action: PayloadAction<boolean>) => {
+      state.layout.siderCollapsed = action.payload
+    },
+    calendarSelectedDateSet: (state, action: PayloadAction<{ date: string | undefined }>) => {
+      if (action.payload.date) {
+        state.calendarSelectedDate.date = action.payload.date
+      } else {
+        state.calendarSelectedDate.date = undefined
+      }
     }
   },
   extraReducers(builder) {
@@ -357,6 +384,9 @@ export const selectUpdatingItemState = (state: RootState) => state.scheduler.upd
 export const selectDeletingItemState = (state: RootState) => state.scheduler.deletingItem
 export const selectInsertingCategoryState = (state: RootState) => state.scheduler.insertingCategory
 export const selectCategoryModal = (state: RootState) => state.scheduler.categoryModal
+export const selectSelectedCalendarDate = (state: RootState) => state.scheduler.calendarSelectedDate 
+
+export const selectLeyout = (state: RootState) => state.scheduler.layout //todo remove
 
 export const itemsSelectors = itemsAdapter.getSelectors(
   (state: RootState) => state.scheduler.itemsAdapter
@@ -388,7 +418,10 @@ export const {
   updatingItemStatusChanged,
   editingItemSet,
   filtersInitialSet,
-  filtersUpdated
+  filtersUpdated,
+  menuKeySelected,
+  siderCollapseSet,
+  calendarSelectedDateSet
 } = schedulerSlice.actions
 
 export default schedulerSlice.reducer
