@@ -25,11 +25,12 @@ import {
 } from "./SchedulerSlice"
 import { AddItemModal } from "./AddItemModal"
 import { useEffect, useRef } from "react"
-import { ItemEntity, ItemType } from "./SchedulerAPI"
+import { isTaskDetails, ItemEntity, ItemType } from "./SchedulerAPI"
 import { ItemModal } from "./ItemModal"
 import { CategoryModal } from "./CategoryModal"
 import { DayView } from "../../util/components/DayView"
 import { SIDER_COLLAPSED_WIDTH, SIDER_WIDTH } from "../../App"
+import { statusIcons } from "../../util/ItemsRecords"
 
 
 export const Scheduler: React.FC = () => {
@@ -221,7 +222,10 @@ export const Scheduler: React.FC = () => {
           color={item.color}
           onClick={() => { onItemOpen(item) }}
         >
-          {item.title}
+          <Flex justify="space-between">
+            {item.title}
+            {isTaskDetails(item.details) ? statusIcons[item.details.status] : null}
+          </Flex>
         </Tag>
       ))
     )
@@ -251,62 +255,81 @@ export const Scheduler: React.FC = () => {
       <ItemModal />
       <CategoryModal />
 
-      <Flex gap='10px' style={{ width: '100%' }}>
-        <Select
-          placeholder="Filter"
-          mode='multiple'
-          maxTagCount='responsive'
-          allowClear
-          style={{ flex: 1 }}
-          options={filterOptions}
-          value={selectedFilters}
-          onChange={(selectedIds) => {
-            dispatch(filtersUpdated(selectedIds))
-          }}
-        >
-
-        </Select>
-
-        <Button type='primary' onClick={() => dispatch(addItemModalOpened(true))}>Add Activity</Button>
-
-        <Button type='primary'>Add Tasks</Button>
-
-        <Button type='primary' onClick={() => dispatch(categoryModalOpened(true))}>Create Category</Button>
-      </Flex>
-
-      <Splitter style={{ height: '100vh', overflow: 'hidden', width: '100%' }}>
+      <Splitter style={{ height: '100%', width: '100%', overflow: 'hidden' }}>
         <Splitter.Panel
           defaultSize="80%" min="70%" max="80%"
-          style={{
-            overflow: 'auto',
-            borderRadius: 8
-          }}
+          style={{ overflow: 'hidden' }}
         >
-          <Calendar
-            style={{ border: '2px solid #f0f0f0' }}
-            cellRender={cellRender}
-            onSelect={onDateSelect}
-          />
+          <Flex
+            vertical
+            style={{
+              height: '100%',
+              padding: '10px',
+              background: 'rgba(255, 255, 255, 0.71)',
+              boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+              backdropFilter: 'blur(5px)',
+              WebkitBackdropFilter: 'blur(5px)'
+            }}
+          >
+            <Flex gap='10px' style={{ height: '40px', width: '100%' }}>
+              <Select
+                placeholder="Filter"
+                mode='multiple'
+                maxTagCount='responsive'
+                allowClear
+                style={{ flex: 1 }}
+                options={filterOptions}
+                value={selectedFilters}
+                onChange={(selectedIds) => {
+                  dispatch(filtersUpdated(selectedIds))
+                }}
+              />
+
+              <Button type='primary' onClick={() => dispatch(addItemModalOpened(true))}>Add Activity</Button>
+
+
+              <Button type='primary' onClick={() => dispatch(categoryModalOpened(true))}>Create Category</Button>
+            </Flex>
+
+            <Flex style={{ height: 'calc(100% - 40px)', width: '100%', overflow: 'auto' }}>
+              <Calendar
+                style={{ border: '2px solid #f0f0f0' }}
+                cellRender={cellRender}
+                onSelect={onDateSelect}
+              />
+            </Flex>
+
+          </Flex>
+
         </Splitter.Panel>
 
         <Splitter.Panel
           collapsible
-          defaultSize="20%"
-          min="15%"
-          max="30%"
-          style={{
-            overflow: 'hidden',
-            background: 'white'
-          }}
+          defaultSize="20%" min="15%" max="30%"
+          style={{ overflow: 'hidden' }}
         >
           <Flex
             ref={scrollRef}
-            style={{ height: '100%', overflowY: 'auto' }}
+            style={{
+              overflowY: 'auto',
+              height: '100%',
+              padding: '10px',
+              background: 'rgba(255, 255, 255, 0.71)',
+              boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+              backdropFilter: 'blur(5px)',
+              WebkitBackdropFilter: 'blur(5px)'
+            }}
           >
-            <DayView calendarItems={currentDateItems} />
+            <Flex vertical style={{ height: '40px', width: '100%' }}>
+              
+              <Button type='primary'>Add Tasks</Button>
+
+              <DayView calendarItems={currentDateItems} />
+
+            </Flex>
           </Flex>
         </Splitter.Panel>
       </Splitter>
-    </Flex>
+    </Flex >
   )
 }

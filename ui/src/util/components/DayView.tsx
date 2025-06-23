@@ -7,15 +7,6 @@ import { itemModalItemSet, itemModalOpened } from '../../features/scheduler/Sche
 
 const { Text } = Typography
 
-type CalendarItem = {
-  id: string
-  title: string
-  start: string
-  end: string
-  color?: string
-  allDay?: boolean
-}
-
 type Props = {
   calendarItems: ItemEntity[] | undefined
 }
@@ -90,16 +81,17 @@ export const DayView: React.FC<Props> = ({ calendarItems }) => {
   }
 
   return (
-    <Flex vertical style={{ minHeight: '100%', width: '100%', paddingLeft: '10px' }}>
+    <Flex vertical style={{ minHeight: '100%', width: '100%', paddingLeft: '5px' }}>
 
       {/* {allDayEvents.length > 0 && (
         <Card style={{ marginBottom: 16 }}>
-          <Title level={5}>All-Day Events</Title>
+          <Text level={5}>All-Day Events</Text>
           {allDayEvents.map(item => (
             <Tag key={item.id} color={item.color}>{item.title}</Tag>
           ))}
         </Card>
-      )} */}
+      )}
+     */}
 
       <div
         style={{

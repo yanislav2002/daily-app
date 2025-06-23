@@ -29,7 +29,7 @@ import { isEventDetails, isReminderDetails, isTaskDetails, Item, ItemEntity, Ite
 import dayjs, { Dayjs } from 'dayjs'
 import type { Color } from 'antd/es/color-picker'
 import { CheckOutlined, PlusOutlined } from '@ant-design/icons'
-import { useDebugValue, useEffect } from 'react'
+import { useEffect } from 'react'
 
 
 type FormValues = {

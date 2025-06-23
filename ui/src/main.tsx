@@ -22,6 +22,10 @@ const theme = {
       itemColor: '#ffffff',
       itemHoverColor: '#ffffff',
       itemSelectedColor: '#ffffff'
+    },
+    Splitter: {
+      splitBarDraggableSize: 30,
+      splitBarSize: 1
     }
   }
 }

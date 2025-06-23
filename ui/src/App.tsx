@@ -2,13 +2,11 @@ import { useEffect } from 'react'
 import './App.css'
 import { Menu, Layout, Space, Image } from 'antd'
 import {
-  AreaChartOutlined,
   CalendarOutlined,
   FormOutlined,
   HomeOutlined,
   LoginOutlined,
-  MessageOutlined,
-  SettingOutlined
+  MessageOutlined
 } from '@ant-design/icons'
 import { Scheduler } from './features/scheduler/Scheduler'
 import {
@@ -46,19 +44,9 @@ const items = [
     label: 'Activity Board'
   },
   {
-    key: '4',
-    icon: <AreaChartOutlined />,
-    label: 'Statistics'
-  },
-  {
     key: '5',
     icon: <LoginOutlined />,
     label: 'Login'
-  },
-  {
-    key: '6',
-    icon: <SettingOutlined />,
-    label: 'Settings'
   },
   {
     key: '7',

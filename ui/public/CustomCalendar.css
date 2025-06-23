@@ -29,3 +29,25 @@
 .ant-picker-cell-inner.ant-picker-calendar-date {
   border-right: 1px solid rgba(0, 0, 0, 0.1) !important;  
 }
+
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+:hover::-webkit-scrollbar,
+:active::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}

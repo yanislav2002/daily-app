@@ -19,39 +19,14 @@ import {
   ClockCircleOutlined,
   CheckCircleOutlined,
   CalendarOutlined,
-  HourglassOutlined,
-  StopOutlined,
-  SyncOutlined
+  HourglassOutlined
 } from "@ant-design/icons"
 import { isEventDetails, isTaskDetails, TaskStatus } from "./SchedulerAPI"
 import { CustomCheckList } from "../../util/components/CustomCheckList"
+import { statusColors, statusIcons, statusLabels } from "../../util/ItemsRecords"
 
 
 const { Text, Paragraph, Title } = Typography
-
-const statusLabels: Record<TaskStatus, string> = {
-  not_started: 'Not Started',
-  in_progress: 'In Progress',
-  waiting: 'Waiting',
-  canceled: 'Canceled',
-  done: 'Done'
-}
-
-const statusColors: Record<TaskStatus, string> = {
-  not_started: 'default',
-  in_progress: 'blue',
-  waiting: 'orange',
-  canceled: 'red',
-  done: 'green'
-}
-
-const statusIcons: Record<TaskStatus, React.ReactNode> = {
-  not_started: <ClockCircleOutlined />,
-  in_progress: <SyncOutlined />,
-  waiting: <HourglassOutlined />,
-  canceled: <StopOutlined />,
-  done: <CheckCircleOutlined />
-}
 
 const taskStatusOptions = (Object.keys(statusLabels) as TaskStatus[]).map((status) => ({
   label: (
