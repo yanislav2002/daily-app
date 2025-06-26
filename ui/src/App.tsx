@@ -1,12 +1,14 @@
 import { useEffect } from 'react'
 import './App.css'
-import { Menu, Layout, Space, Image } from 'antd'
+import { Menu, Layout, Space, Image, Button, Flex, Tooltip } from 'antd'
 import {
   CalendarOutlined,
   FormOutlined,
   HomeOutlined,
   LoginOutlined,
-  MessageOutlined
+  LogoutOutlined,
+  MessageOutlined,
+  UserAddOutlined
 } from '@ant-design/icons'
 import { Scheduler } from './features/scheduler/Scheduler'
 import {
@@ -18,6 +20,9 @@ import {
   siderCollapseSet
 } from './features/scheduler/SchedulerSlice'
 import { useAppDispatch, useAppSelector } from './app/hooks'
+import { AuthModal } from './features/auth/AuthModal'
+import { authModalOpened, authModeStatusChanched } from './features/auth/AuthSlice'
+import { MenuProps } from 'rc-menu'
 
 
 const { Sider, Content } = Layout
@@ -42,16 +47,6 @@ const items = [
     key: '3',
     icon: <FormOutlined />,
     label: 'Activity Board'
-  },
-  {
-    key: '5',
-    icon: <LoginOutlined />,
-    label: 'Login'
-  },
-  {
-    key: '7',
-    icon: <MessageOutlined />,
-    label: 'Feedback'
   }
 ]
 
@@ -74,26 +69,101 @@ const App = () => {
     onLoad().catch((err: unknown) => { console.log(err) })
   }, [dispatch])
 
+  const onLoginClick = () => {
+    dispatch(authModeStatusChanched('login'))
+    dispatch(authModalOpened(true))
+  }
+
+  const onRegisterClick = () => {
+    dispatch(authModeStatusChanched('register'))
+    dispatch(authModalOpened(true))
+  }
+
   const renderContent = (key: string) => {
     switch (key) {
       case '1':
         return <div>Content for Navigation One</div>
       case '2':
         return <Scheduler />
-      case '13':
-        return <div>Content for Option 13</div>
-      case '14':
-        return <div>Content for Option 14</div>
+      case '3':
+        return <div>Content for Option 3</div>
       default:
-        return <div>Select a menu item</div>
+        return
     }
   }
 
+  const renderLinks = () => {
+    return (
+      <Flex vertical style={{ marginBottom: '10px' }}>
+        <Button
+          type="link"
+          icon={
+            siderCollapsed
+              ? <Tooltip title='Login' arrow placement='right'><LoginOutlined /></Tooltip>
+              : <LoginOutlined />
+          }
+          onClick={onLoginClick}
+          style={{ ...buttonStyle, width: '100%', textAlign: 'left' }}
+        >
+          {!siderCollapsed && 'Login'}
+        </Button>
+
+        <Button
+          type="link"
+          icon={
+            siderCollapsed
+              ? <Tooltip title='Login' arrow placement='right'><UserAddOutlined /></Tooltip>
+              : <UserAddOutlined />
+          }
+          onClick={onRegisterClick}
+          style={{ ...buttonStyle, width: '100%', textAlign: 'left' }}
+        >
+          {!siderCollapsed && 'Register'}
+        </Button>
+
+        <Button
+          type="text"
+          icon={
+            siderCollapsed
+              ? <Tooltip title='Login' arrow placement='right'><LogoutOutlined /></Tooltip>
+              : <LogoutOutlined />
+          }
+          style={buttonStyle}
+        >
+          {!siderCollapsed && 'Logout'}
+        </Button>
+
+        <Button
+          type="text"
+          icon={
+            siderCollapsed
+              ? <Tooltip title='Login' arrow placement='right'><MessageOutlined /></Tooltip>
+              : <MessageOutlined />
+          }
+          // onClick={onFeedbackClick}
+          style={buttonStyle}
+        >
+          {!siderCollapsed && 'Feedback'}
+        </Button>
+      </Flex>
+    )
+  }
+
+  const buttonStyle: React.CSSProperties = {
+    color: 'white',
+    width: '100%',
+    textAlign: 'left',
+    transition: 'background 0.3s',
+    backgroundColor: 'transparent'
+  }
+
   return (
-    <Layout style={{ minHeight: '100vh', minWidth: '100vw' }}>
+    <Layout style={{ height: '100vh', minWidth: '100vw' }}>
+      <AuthModal />
       <Sider
         style={{
-          backgroundColor: '#33658a'
+          backgroundColor: '#33658a',
+          height: '100%'
         }}
         collapsible
         collapsed={siderCollapsed}
@@ -101,15 +171,24 @@ const App = () => {
         width={SIDER_WIDTH}
         collapsedWidth={SIDER_COLLAPSED_WIDTH}
       >
-        <Space>
-          <Image src='/logo.png' width={siderCollapsed ? ICON_COLLAPSED_WIDTH : ICON_WIDTH} preview={false} />
-        </Space>
-        <Menu
-          mode="inline"
-          selectedKeys={[selectedMenuKey]}
-          onClick={(e) => { dispatch(menuKeySelected(e.key)) }}
-          items={items}
-        />
+        <Flex vertical justify='space-between' style={{ height: '100%' }}>
+          <Flex vertical>
+            <Space>
+              <Image src='/logo.png' width={siderCollapsed ? ICON_COLLAPSED_WIDTH : ICON_WIDTH} preview={false} />
+            </Space>
+            <Menu
+              mode="inline"
+              defaultSelectedKeys={[selectedMenuKey]}
+              onClick={(e) => dispatch(menuKeySelected(e.key))}
+              items={items}
+              motion={{
+                motionLeaveImmediately: true
+              }}
+            />
+          </Flex>
+
+          {renderLinks()}
+        </Flex>
       </Sider>
       <Content style={{
         background: 'radial-gradient(circle, #ffffff, #f9f9f9, #f4f4f4, #eeeeee, #e9e9e9)',
