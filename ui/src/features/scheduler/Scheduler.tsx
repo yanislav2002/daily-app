@@ -31,6 +31,7 @@ import { CategoryModal } from "./CategoryModal"
 import { DayView } from "../../util/components/DayView"
 import { SIDER_COLLAPSED_WIDTH, SIDER_WIDTH } from "../../App"
 import { statusIcons } from "../../util/ItemsRecords"
+import Title from "antd/es/typography/Title"
 
 
 export const Scheduler: React.FC = () => {
@@ -48,6 +49,8 @@ export const Scheduler: React.FC = () => {
   const deletingItem = useAppSelector(selectDeletingItemState)
   const updatingItem = useAppSelector(selectUpdatingItemState)
   const { date } = useAppSelector(selectSelectedCalendarDate)
+
+  const formattedDay = dayjs(date, 'DD-MM-YYYY').format('dddd, D MMMM YYYY')
 
   const currentDateItems = allItems.filter(item => item.date === date)
 
@@ -321,11 +324,9 @@ export const Scheduler: React.FC = () => {
             }}
           >
             <Flex vertical style={{ height: '40px', width: '100%' }}>
-              
-              <Button type='primary'>Add Tasks</Button>
+              <Title  level={4} style={{ marginBottom: 12 }}>{formattedDay}</Title>
 
               <DayView calendarItems={currentDateItems} />
-
             </Flex>
           </Flex>
         </Splitter.Panel>

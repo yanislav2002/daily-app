@@ -231,7 +231,7 @@ export const AddItemModal: React.FC = () => {
     try {
       const category = categories.find(cat => cat.id === values.category)
       const item = transformFormValuesToCalendarItem(values, hasCategory, category?.color ?? '')
-
+      
       if (editingItem) {
         const itemEntity: ItemEntity = { ...item, id: editingItem.id, userId: editingItem.userId }
 

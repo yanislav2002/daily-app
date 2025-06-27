@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import './App.css'
-import { Menu, Layout, Space, Image, Button, Flex, Tooltip } from 'antd'
+import { Menu, Layout, Space, Image, Button, Flex, Tooltip, notification } from 'antd'
 import {
   CalendarOutlined,
   FormOutlined,
@@ -21,8 +21,16 @@ import {
 } from './features/scheduler/SchedulerSlice'
 import { useAppDispatch, useAppSelector } from './app/hooks'
 import { AuthModal } from './features/auth/AuthModal'
-import { authModalOpened, authModeStatusChanched } from './features/auth/AuthSlice'
-import { MenuProps } from 'rc-menu'
+import {
+  authModalOpened,
+  authModeStatusChanched,
+  loggingInStatusReset,
+  logoutUser,
+  registeringStatusReset,
+  selectLogginginStatus,
+  selectRegisteringStatus,
+  selectUserId
+} from './features/auth/AuthSlice'
 
 
 const { Sider, Content } = Layout
@@ -32,42 +40,99 @@ export const SIDER_COLLAPSED_WIDTH = '50px'
 const ICON_WIDTH = '80px'
 const ICON_COLLAPSED_WIDTH = '50px'
 
-const items = [
-  {
-    key: '1',
-    icon: <HomeOutlined />,
-    label: 'Home'
-  },
-  {
-    key: '2',
-    icon: <CalendarOutlined />,
-    label: 'Calendar'
-  },
-  {
-    key: '3',
-    icon: <FormOutlined />,
-    label: 'Activity Board'
-  }
-]
 
 const App = () => {
   const dispatch = useAppDispatch()
 
   const { siderCollapsed, selectedMenuKey } = useAppSelector(selectLeyout)
 
+  const registering = useAppSelector(selectRegisteringStatus)
+  const loggingin = useAppSelector(selectLogginginStatus)
+  const userId = useAppSelector(selectUserId)
+
+  const [api, contextHolder] = notification.useNotification()
+
+  const items = [
+    {
+      key: '1',
+      icon: <HomeOutlined />,
+      label: 'Home'
+    },
+    ...(userId ? [
+      {
+        key: '2',
+        icon: <CalendarOutlined />,
+        label: 'Calendar'
+      },
+      {
+        key: '3',
+        icon: <FormOutlined />,
+        label: 'Activity Board'
+      }
+    ] : [])
+  ]
+
+  useEffect(() => {
+    if (!userId) {
+      dispatch(menuKeySelected('1'))
+    }
+  }, [userId, dispatch])
+
   useEffect(() => {
     const onLoad = async () => {
       try {
-        await dispatch(fetchItemsAsync())
-        await dispatch(fetchCategoriesAsync())
-        dispatch(filtersInitialSet())
+        if (userId) {
+          await dispatch(fetchCategoriesAsync())
+          await dispatch(fetchItemsAsync())
+          dispatch(filtersInitialSet())
+        }
       } catch (error) {
         console.log('Failed to fetch items', error)
       }
     }
 
     onLoad().catch((err: unknown) => { console.log(err) })
-  }, [dispatch])
+  }, [dispatch, userId])
+
+  useEffect(() => {
+    if (registering.status === 'succeeded') {
+      api.success({
+        message: 'Success',
+        description: 'Registration Successful',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(registeringStatusReset())
+      dispatch(menuKeySelected('1'))
+    } else if (registering.status === 'failed') {
+      api.error({
+        message: 'Error',
+        description: 'Registration Failed',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(registeringStatusReset())
+    }
+
+    if (loggingin.status === 'succeeded') {
+      api.success({
+        message: 'Success',
+        description: 'Login Successful',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(loggingInStatusReset())
+      dispatch(menuKeySelected('1'))
+    } else if (loggingin.status === 'failed') {
+      api.error({
+        message: 'Error',
+        description: 'Login Failed',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(loggingInStatusReset())
+    }
+  }, [api, dispatch, loggingin.status, registering.status])
 
   const onLoginClick = () => {
     dispatch(authModeStatusChanched('login'))
@@ -95,7 +160,7 @@ const App = () => {
   const renderLinks = () => {
     return (
       <Flex vertical style={{ marginBottom: '10px' }}>
-        <Button
+        {!userId && <Button
           type="link"
           icon={
             siderCollapsed
@@ -106,45 +171,46 @@ const App = () => {
           style={{ ...buttonStyle, width: '100%', textAlign: 'left' }}
         >
           {!siderCollapsed && 'Login'}
-        </Button>
+        </Button>}
 
-        <Button
+        {!userId && <Button
           type="link"
           icon={
             siderCollapsed
-              ? <Tooltip title='Login' arrow placement='right'><UserAddOutlined /></Tooltip>
+              ? <Tooltip title='Register' arrow placement='right'><UserAddOutlined /></Tooltip>
               : <UserAddOutlined />
           }
           onClick={onRegisterClick}
           style={{ ...buttonStyle, width: '100%', textAlign: 'left' }}
         >
           {!siderCollapsed && 'Register'}
-        </Button>
+        </Button>}
 
-        <Button
+        {userId && <Button
           type="text"
           icon={
             siderCollapsed
-              ? <Tooltip title='Login' arrow placement='right'><LogoutOutlined /></Tooltip>
+              ? <Tooltip title='Logout' arrow placement='right'><LogoutOutlined /></Tooltip>
               : <LogoutOutlined />
           }
           style={buttonStyle}
+          onClick={() => dispatch(logoutUser())}
         >
           {!siderCollapsed && 'Logout'}
-        </Button>
+        </Button>}
 
-        <Button
+        {userId && <Button
           type="text"
           icon={
             siderCollapsed
-              ? <Tooltip title='Login' arrow placement='right'><MessageOutlined /></Tooltip>
+              ? <Tooltip title='Feedback' arrow placement='right'><MessageOutlined /></Tooltip>
               : <MessageOutlined />
           }
           // onClick={onFeedbackClick}
           style={buttonStyle}
         >
           {!siderCollapsed && 'Feedback'}
-        </Button>
+        </Button>}
       </Flex>
     )
   }
@@ -159,7 +225,10 @@ const App = () => {
 
   return (
     <Layout style={{ height: '100vh', minWidth: '100vw' }}>
+
+      {contextHolder}
       <AuthModal />
+
       <Sider
         style={{
           backgroundColor: '#33658a',

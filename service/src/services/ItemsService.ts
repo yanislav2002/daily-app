@@ -1,5 +1,5 @@
 import { injectable } from "inversify"
-import { IItemsService, Item } from "./interfaces/IItemsService.js"
+import { EventDetails, IItemsService, Item } from "./interfaces/IItemsService.js"
 import { ItemEntity } from "../model/ItemsEntity.js"
 import {
   BaseItemModel,
@@ -8,6 +8,9 @@ import {
   TaskModel
 } from "../model/schemas/Items.schema.js"
 import { isItemEntity } from "../controllers/ItemsController.js"
+import { CategoryEntity } from "../model/CategoryEntity.js"
+import Holidays from 'date-holidays'
+import dayjs from "dayjs"
 
 
 @injectable()
@@ -75,6 +78,43 @@ export class ItemsService implements IItemsService {
     }
 
     console.log('Item deleted successfully')
+  }
+
+  public addOfficialHolidays = async (category: CategoryEntity, countryCode: string, userId: string): Promise<void> => {
+    const holidays = this.getNationalHolidays(countryCode)
+
+    await Promise.all(
+      holidays.map(holiday =>
+        this.insert(
+          {
+            type: 'event',
+            title: holiday.title,
+            date: holiday.date,
+            categoryId: category.id,
+            color: category.color,
+            description: `Official holiday in ${countryCode}`,
+            details: {
+              allDay: true
+            }
+          },
+          userId
+        )
+      )
+    )
+
+    console.log('Official holidays added successfully')
+  }
+
+  private getNationalHolidays = (countryCode: string, year: number = new Date().getFullYear()) => {
+    const hd = new Holidays()
+    hd.init(countryCode, 'en')
+
+    const holidays = hd.getHolidays(year)
+
+    return holidays.map(h => ({
+      title: h.name,
+      date: dayjs(h.date).format('DD-MM-YYYY')
+    }))
   }
 
   private getItemEntity = async (item: Item, userId: string): Promise<ItemEntity> => {

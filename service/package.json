@@ -13,7 +13,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
+    "date-holidays": "^3.24.3",
+    "dayjs": "^1.11.13",
     "express": "^4.21.2",
     "inversify": "^6.2.2",
     "inversify-express-utils": "^6.5.0",
@@ -23,6 +26,7 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.27.1",
+    "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.1",
     "@types/node": "^22.15.3",

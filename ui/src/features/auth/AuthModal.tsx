@@ -116,7 +116,7 @@ export const AuthModal: React.FC = () => {
               { required: true, message: 'Please enter mail!' },
               {
                 validator: (_, value: string) => {
-                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+                  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
                   if (!value || emailRegex.test(value)) {
                     return Promise.resolve()
@@ -134,7 +134,19 @@ export const AuthModal: React.FC = () => {
             name='password'
             rules={[
               { required: true, message: 'Please enter password!' },
-              { min: 6, max: 30 }
+              {
+                validator: (_, value: string) => {
+                  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/
+
+                  if (!value || passwordRegex.test(value)) {
+                    return Promise.resolve()
+                  }
+
+                  return Promise.reject(
+                    new Error('Password must be at least 6 characters, include letters and numbers.')
+                  )
+                }
+              }
             ]}
           >
             <Input.Password placeholder='Password' />

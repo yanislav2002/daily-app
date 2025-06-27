@@ -16,12 +16,12 @@ export const isItem = (item: unknown): item is Item => {
     'type' in item && typeof item.type === 'string' &&
     'title' in item && typeof item.title === 'string' &&
     'date' in item && typeof item.date === 'string' &&
-    'description' in item && typeof item.date === 'string' &&
+    'description' in item && typeof item.description === 'string' &&
     'details' in item && typeof item.details === 'object'
   ) {
     if ('color' in item && typeof item.color !== 'string') return false
     if ('categoryId' in item && typeof item.categoryId !== 'string') return false
-    if ('repeat' in item && !isRepeatSettings(item.repeat)) return false
+    // if ('repeat' in item && !isRepeatSettings(item.repeat)) return false
 
     switch (item.type) {
       case 'task':
@@ -60,12 +60,12 @@ export const isTaskDetails = (item: unknown): item is TaskDetails => {
 }
 
 export const isEventDetails = (item: unknown): item is EventDetails => {
-  return (
-    typeof item === 'object' && item !== null &&
-    'startTime' in item && typeof item.startTime === 'string' &&
-    'endTime' in item && typeof item.endTime === 'string' &&
-    'allDay' in item && typeof item.allDay === 'boolean'
-  )
+  if (typeof item !== 'object' || item === null) return false
+  if (!('allDay' in item) || typeof item.allDay !== 'boolean') return false
+  if ('startTime' in item && typeof item.startTime !== 'string') return false
+  if ('endTime' in item && typeof item.endTime !== 'string') return false
+
+  return true
 }
 
 export const isReminderDetails = (item: unknown): item is ReminderDetails => {
@@ -110,7 +110,9 @@ const isCategory = (value: unknown): value is Category => {
     typeof value === 'object' && value !== null &&
     'name' in value && typeof value.name === 'string' &&
     'color' in value && typeof value.color === 'string' &&
-    'description' in value && typeof value.description === 'string'
+    (
+      !('description' in value) || typeof value.description === 'string'
+    )
   )
 }
 
@@ -260,6 +262,8 @@ export const fetchCategories = async (userId: string): Promise<CategoryEntity[]>
   }
 
   if (Array.isArray(res.data) && res.data.every(item => isCategoryEntity(item))) {
+    console.log('hre');
+
     return res.data
   }
 

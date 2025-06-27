@@ -16,6 +16,8 @@ import {
   updateItem
 } from "./SchedulerAPI"
 import ThunkStatus from "../../util/ThunkStatus"
+import { logoutUser, selectUserId } from "../auth/AuthSlice"
+import { useAppSelector } from "../../app/hooks"
 
 
 const itemsAdapter = createEntityAdapter<ItemEntity>()
@@ -217,7 +219,9 @@ const schedulerSlice = createSlice({
       .addCase(fetchItemsAsync.fulfilled, (state, action) => {
         const items = action.payload
 
-        itemsAdapter.setAll(state.itemsAdapter, items)
+        if (items) {
+          itemsAdapter.setAll(state.itemsAdapter, items)
+        }
 
         state.fetchingItems.status = 'succeeded'
       })
@@ -232,7 +236,9 @@ const schedulerSlice = createSlice({
       .addCase(insertItemAsync.fulfilled, (state, action) => {
         const itemEntity = action.payload
 
-        itemsAdapter.setOne(state.itemsAdapter, itemEntity)
+        if (itemEntity) {
+          itemsAdapter.setOne(state.itemsAdapter, itemEntity)
+        }
 
         state.addItemModal.open = false
         state.insertingItem.status = 'succeeded'
@@ -248,13 +254,15 @@ const schedulerSlice = createSlice({
       .addCase(insertCategoryAsync.fulfilled, (state, action) => {
         const categoryEntity = action.payload
 
-        categoriesAdapter.setOne(state.categoriesAdapter, categoryEntity)
+        if (categoryEntity) {
+          categoriesAdapter.setOne(state.categoriesAdapter, categoryEntity)
 
-        filtersAdapter.setOne(state.filtersAdapter, {
-          id: categoryEntity.id,
-          label: categoryEntity.name,
-          isSelected: true
-        })
+          filtersAdapter.setOne(state.filtersAdapter, {
+            id: categoryEntity.id,
+            label: categoryEntity.name,
+            isSelected: true
+          })
+        }
 
         state.categoryModal.open = false
         state.insertingCategory.status = 'succeeded'
@@ -270,7 +278,9 @@ const schedulerSlice = createSlice({
       .addCase(fetchCategoriesAsync.fulfilled, (state, action) => {
         const categories = action.payload
 
-        categoriesAdapter.addMany(state.categoriesAdapter, categories)
+        if (categories) {
+          categoriesAdapter.addMany(state.categoriesAdapter, categories)
+        }
 
         state.categoryModal.open = false
         state.fetchingCategories.status = 'succeeded'
@@ -286,12 +296,14 @@ const schedulerSlice = createSlice({
       .addCase(updateItemAsync.fulfilled, (state, action) => {
         const itemEntity = action.payload
 
-        itemsAdapter.updateOne(state.itemsAdapter, {
-          id: itemEntity.id,
-          changes: {
-            ...itemEntity
-          }
-        })
+        if (itemEntity) {
+          itemsAdapter.updateOne(state.itemsAdapter, {
+            id: itemEntity.id,
+            changes: {
+              ...itemEntity
+            }
+          })
+        }
 
         state.itemModal.open = false
         state.addItemModal.open = false
@@ -318,62 +330,84 @@ const schedulerSlice = createSlice({
         state.deletingItem.error = '//todo add err'
       })
 
+      .addCase(logoutUser, (state) => {
+        itemsAdapter.removeAll(state.itemsAdapter)
+        categoriesAdapter.removeAll(state.categoriesAdapter)
+        filtersAdapter.removeAll(state.filtersAdapter)
+      })
+
   }
 })
 
 export const insertItemAsync = createAsyncThunk(
   'calendar/insertItem',
-  async (item: Item) => {
-    const userId = 'testUser' //todo use real Id
+  async (item: Item, { getState }) => {
+    const state = getState() as RootState
+    const userId = state.auth.userId
 
-    return await insertItem(item, userId)
+    if (userId) {
+      return await insertItem(item, userId)
+    }
   }
 )
 
 export const fetchItemsAsync = createAsyncThunk(
   'calendar/fetchItems',
-  async () => {
-    const userId = 'testUser' //todo use real Id
+  async (_, { getState }) => {
+    const state = getState() as RootState
+    const userId = state.auth.userId
 
-    return await fetchItems(userId)
+    if (userId) {
+      return await fetchItems(userId)
+    }
   }
 )
 
 export const updateItemAsync = createAsyncThunk(
   'items/updateItem',
-  async (item: ItemEntity) => {
-    const userId = 'testUser' //todo use real Id
-
-    return await updateItem(item, userId)
+  async (item: ItemEntity, { getState }) => {
+    const state = getState() as RootState
+    const userId = state.auth.userId
+    
+    if (userId) {
+      return await updateItem(item, userId)
+    }
   }
 )
 
 export const deleteItemAsync = createAsyncThunk(
   'items/deleteItem',
-  async (id: string) => {
-    const userId = 'testUser' //todo use real Id
-
-    await deleteItem(id, userId)
-
-    return
+  async (id: string, { getState }) => {
+    const state = getState() as RootState
+    const userId = state.auth.userId
+    
+    if (userId) {
+      await deleteItem(id, userId)
+    }
   }
 )
 
 export const insertCategoryAsync = createAsyncThunk(
   'calendar/insertCategory',
-  async (category: Category) => {
-    const userId = 'testUser' //todo use real Id
-
-    return await insertCategory(category, userId)
+  async (category: Category, { getState }) => {
+    const state = getState() as RootState
+    const userId = state.auth.userId
+    
+    if (userId) {
+      return await insertCategory(category, userId)
+    }
   }
 )
 
 export const fetchCategoriesAsync = createAsyncThunk(
   'calendar/fetchCategories',
-  async () => {
-    const userId = 'testUser' //todo use real Id
-
-    return await fetchCategories(userId)
+  async (_, { getState }) => {
+    const state = getState() as RootState
+    const userId = state.auth.userId
+    
+    if (userId) {
+      return await fetchCategories(userId)
+    }
   }
 )
 
@@ -384,7 +418,7 @@ export const selectUpdatingItemState = (state: RootState) => state.scheduler.upd
 export const selectDeletingItemState = (state: RootState) => state.scheduler.deletingItem
 export const selectInsertingCategoryState = (state: RootState) => state.scheduler.insertingCategory
 export const selectCategoryModal = (state: RootState) => state.scheduler.categoryModal
-export const selectSelectedCalendarDate = (state: RootState) => state.scheduler.calendarSelectedDate 
+export const selectSelectedCalendarDate = (state: RootState) => state.scheduler.calendarSelectedDate
 
 export const selectLeyout = (state: RootState) => state.scheduler.layout //todo remove
 

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Typography, Card, Flex } from 'antd'
+import { Typography, Card, Flex, Tag } from 'antd'
 import { isEventDetails, isTaskDetails, ItemEntity } from '../../features/scheduler/SchedulerAPI'
 import { useAppDispatch } from '../../app/hooks'
 import { itemModalItemSet, itemModalOpened } from '../../features/scheduler/SchedulerSlice'
@@ -23,8 +23,7 @@ export const DayView: React.FC<Props> = ({ calendarItems }) => {
 
   if (!calendarItems) return null
 
-  const allDayEvents = calendarItems.filter(i => i.allDay)
-  const timedItems = calendarItems.filter(i => !i.allDay)
+  const allDayEvents = calendarItems.filter(i => (isEventDetails(i.details) && i.details.allDay))
 
   const onItemOpen = (item: ItemEntity) => {
     dispatch(itemModalItemSet(item))
@@ -33,10 +32,11 @@ export const DayView: React.FC<Props> = ({ calendarItems }) => {
 
   const renderCardItems = (items: ItemEntity[]) => {
     return items.map(event => {
-      if (isTaskDetails(event.details) || isEventDetails(event.details)) {
-
-        const startMin = timeToMinutes(event.details.startTime)
-        const endMin = timeToMinutes(event.details.endTime)
+      if (isEventDetails(event.details) && event.details.allDay) return null
+      
+      if (isEventDetails(event.details) || isTaskDetails(event.details)) {
+        const startMin = typeof event.details.startTime === 'string' ? timeToMinutes(event.details.startTime) : 0
+        const endMin = typeof event.details.endTime === 'string' ? timeToMinutes(event.details.endTime) : startMin + 15
         const top = (startMin / 15) * ROW_HEIGHT
         const height = ((endMin - startMin) / 15) * ROW_HEIGHT
 
@@ -82,16 +82,23 @@ export const DayView: React.FC<Props> = ({ calendarItems }) => {
 
   return (
     <Flex vertical style={{ minHeight: '100%', width: '100%', paddingLeft: '5px' }}>
-
-      {/* {allDayEvents.length > 0 && (
-        <Card style={{ marginBottom: 16 }}>
-          <Text level={5}>All-Day Events</Text>
-          {allDayEvents.map(item => (
-            <Tag key={item.id} color={item.color}>{item.title}</Tag>
-          ))}
+      {allDayEvents.length > 0 && (
+        <Card size="small">
+          <Text strong>All-Day Events</Text>
+          <Flex wrap="wrap" gap="small" style={{ marginTop: 8 }}>
+            {allDayEvents.map(item => (
+              <Tag
+                key={item.id}
+                color={item.color}
+                onClick={() => { onItemOpen(item) }}
+                style={{ cursor: 'pointer' }}
+              >
+                {item.title}
+              </Tag>
+            ))}
+          </Flex>
         </Card>
       )}
-     */}
 
       <div
         style={{
@@ -123,7 +130,6 @@ export const DayView: React.FC<Props> = ({ calendarItems }) => {
           })}
         </div>
 
-        {/* Timeline Grid */}
         <div style={{ flex: 1, position: 'relative', borderLeft: '1px solid #ddd' }}>
           {Array.from({ length: 96 }).map((_, i) => (
             <div

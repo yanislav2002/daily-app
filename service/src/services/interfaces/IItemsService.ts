@@ -1,3 +1,4 @@
+import { CategoryEntity } from "../../model/CategoryEntity.js"
 import { ItemEntity } from "../../model/ItemsEntity.js"
 
 
@@ -56,4 +57,5 @@ export type IItemsService = {
   insert(item: Item, userId: string): Promise<ItemEntity>
   update(item: ItemEntity, userId: string): Promise<ItemEntity>
   delete(id: string, userId: string): Promise<void>
+  addOfficialHolidays(category: CategoryEntity, countryCode: string, userId: string): Promise<void>
 }

@@ -12,7 +12,9 @@ export const isCategory = (value: unknown): value is Category => {
     typeof value === 'object' && value !== null &&
     'name' in value && typeof value.name === 'string' &&
     'color' in value && typeof value.color === 'string' &&
-    'description' in value && typeof value.description === 'string'
+    (
+      !('description' in value) || typeof value.description === 'string'
+    )
   )
 }
 
