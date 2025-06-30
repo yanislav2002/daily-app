@@ -35,7 +35,6 @@ export const isItem = (item: unknown): item is Item => {
   ) {
     if ('color' in item && typeof item.color !== 'string') return false
     if ('categoryId' in item && typeof item.categoryId !== 'string') return false
-    // if ('repeat' in item && !isRepeatSettings(item.repeat)) return false
 
     switch (item.type) {
       case 'task':

@@ -12,12 +12,20 @@ import {
 } from '@ant-design/icons'
 import { Scheduler } from './features/scheduler/Scheduler'
 import {
+  deletingItemStatusChanged,
   fetchCategoriesAsync,
   fetchItemsAsync,
   filtersInitialSet,
+  insertingCategoryStatusChanged,
+  insertingItemStatusChanged,
   menuKeySelected,
+  selectDeletingItemState,
+  selectInsertingCategoryState,
+  selectInsertingItemState,
   selectLeyout,
-  siderCollapseSet
+  selectUpdatingItemState,
+  siderCollapseSet,
+  updatingItemStatusChanged
 } from './features/scheduler/SchedulerSlice'
 import { useAppDispatch, useAppSelector } from './app/hooks'
 import { AuthModal } from './features/auth/AuthModal'
@@ -31,6 +39,10 @@ import {
   selectRegisteringStatus,
   selectUserId
 } from './features/auth/AuthSlice'
+import { ActivityBoard } from './features/scheduler/ActivityBoard'
+import { AddItemModal } from './features/scheduler/AddItemModal'
+import { ItemModal } from './features/scheduler/ItemModal'
+import { CategoryModal } from './features/scheduler/CategoryModal'
 
 
 const { Sider, Content } = Layout
@@ -48,6 +60,11 @@ const App = () => {
 
   const registering = useAppSelector(selectRegisteringStatus)
   const loggingin = useAppSelector(selectLogginginStatus)
+  const insertingItems = useAppSelector(selectInsertingItemState)
+  const insertingCategory = useAppSelector(selectInsertingCategoryState)
+  const deletingItem = useAppSelector(selectDeletingItemState)
+  const updatingItem = useAppSelector(selectUpdatingItemState)
+
   const userId = useAppSelector(selectUserId)
 
   const [api, contextHolder] = notification.useNotification()
@@ -95,6 +112,78 @@ const App = () => {
   }, [dispatch, userId])
 
   useEffect(() => {
+    if (insertingItems.status === 'succeeded') {
+      api.success({
+        message: 'Success',
+        description: 'Item added successfully!',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(insertingItemStatusChanged())
+    } else if (insertingItems.status === 'failed') {
+      api.error({
+        message: 'Error',
+        description: 'Failed to add item. Please try again.',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(insertingItemStatusChanged())
+    }
+
+    if (updatingItem.status === 'succeeded') {
+      api.success({
+        message: 'Success',
+        description: 'Item updated successfully!',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(updatingItemStatusChanged())
+    } else if (updatingItem.status === 'failed') {
+      api.error({
+        message: 'Error',
+        description: 'Failed to update item. Please try again.',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(updatingItemStatusChanged())
+    }
+
+    if (deletingItem.status === 'succeeded') {
+      api.success({
+        message: 'Success',
+        description: 'Item deleted successfully!',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(deletingItemStatusChanged())
+    } else if (deletingItem.status === 'failed') {
+      api.error({
+        message: 'Error',
+        description: 'Failed to delete item. Please try again.',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(deletingItemStatusChanged())
+    }
+
+    if (insertingCategory.status === 'succeeded') {
+      api.success({
+        message: 'Success',
+        description: 'Category created successfully!',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(insertingCategoryStatusChanged())
+    } else if (insertingCategory.status === 'failed') {
+      api.error({
+        message: 'Error',
+        description: 'Failed to create category. Please try again.',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(insertingCategoryStatusChanged())
+    }
+
     if (registering.status === 'succeeded') {
       api.success({
         message: 'Success',
@@ -132,7 +221,16 @@ const App = () => {
       })
       dispatch(loggingInStatusReset())
     }
-  }, [api, dispatch, loggingin.status, registering.status])
+  }, [
+    dispatch,
+    api,
+    deletingItem.status,
+    insertingCategory.status,
+    insertingItems.status,
+    loggingin.status,
+    registering.status,
+    updatingItem.status
+  ])
 
   const onLoginClick = () => {
     dispatch(authModeStatusChanched('login'))
@@ -151,7 +249,7 @@ const App = () => {
       case '2':
         return <Scheduler />
       case '3':
-        return <div>Content for Option 3</div>
+        return <ActivityBoard />
       default:
         return
     }
@@ -225,9 +323,12 @@ const App = () => {
 
   return (
     <Layout style={{ height: '100vh', minWidth: '100vw' }}>
-
       {contextHolder}
       <AuthModal />
+
+      <AddItemModal />
+      <ItemModal />
+      <CategoryModal />
 
       <Sider
         style={{

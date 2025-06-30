@@ -38,9 +38,9 @@ export class ItemsService implements IItemsService {
   }
 
   public insert = async (item: Item, userId: string): Promise<ItemEntity> => {
-    const test = await this.getItemEntity(item, userId)
+    const itemEntity = await this.getItemEntity(item, userId)
     console.log('New Item added successfully')
-    return test
+    return itemEntity
   }
 
   public update = async (item: ItemEntity, userId: string): Promise<ItemEntity> => {

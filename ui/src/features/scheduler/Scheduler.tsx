@@ -1,33 +1,22 @@
-import { Button, Calendar, CalendarProps, Flex, notification, Select, Splitter, Tag } from "antd"
+import { Button, Calendar, CalendarProps, Flex, Select, Splitter, Tag } from "antd"
 import type { Dayjs } from 'dayjs'
 import dayjs from "dayjs"
 import '../../../public/CustomCalendar.css'
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import {
   addItemModalOpened,
-  insertingItemStatusChanged,
   itemModalItemSet,
   itemModalOpened,
   itemsSelectors,
   categoryModalOpened,
-  selectInsertingItemState,
-  selectInsertingCategoryState,
-  insertingCategoryStatusChanged,
-  selectDeletingItemState,
-  deletingItemStatusChanged,
-  selectUpdatingItemState,
-  updatingItemStatusChanged,
   filtersSelectors,
   filtersUpdated,
   selectLeyout,
   calendarSelectedDateSet,
   selectSelectedCalendarDate
 } from "./SchedulerSlice"
-import { AddItemModal } from "./AddItemModal"
 import { useEffect, useRef } from "react"
 import { isTaskDetails, ItemEntity, ItemType } from "./SchedulerAPI"
-import { ItemModal } from "./ItemModal"
-import { CategoryModal } from "./CategoryModal"
 import { DayView } from "../../util/components/DayView"
 import { SIDER_COLLAPSED_WIDTH, SIDER_WIDTH } from "../../App"
 import { statusIcons } from "../../util/ItemsRecords"
@@ -44,17 +33,11 @@ export const Scheduler: React.FC = () => {
   const allItems = useAppSelector(itemsSelectors.selectAll)
   const filters = useAppSelector(filtersSelectors.selectAll)
 
-  const insertingItems = useAppSelector(selectInsertingItemState)
-  const insertingCategory = useAppSelector(selectInsertingCategoryState)
-  const deletingItem = useAppSelector(selectDeletingItemState)
-  const updatingItem = useAppSelector(selectUpdatingItemState)
   const { date } = useAppSelector(selectSelectedCalendarDate)
 
   const formattedDay = dayjs(date, 'DD-MM-YYYY').format('dddd, D MMMM YYYY')
 
   const currentDateItems = allItems.filter(item => item.date === date)
-
-  const [api, contextHolder] = notification.useNotification()
 
   const selectedFilters = filters.filter(filter => filter.isSelected).map(f => f.id)
   const filtersWithItemType = filters.filter(f => f.itemType)
@@ -112,87 +95,6 @@ export const Scheduler: React.FC = () => {
       el.scrollTop = scrollTop
     }
   }, [])
-
-  useEffect(() => {
-    if (insertingItems.status === 'succeeded') {
-      api.success({
-        message: 'Success',
-        description: 'Item added successfully!',
-        duration: 3,
-        showProgress: true
-      })
-      dispatch(insertingItemStatusChanged())
-    } else if (insertingItems.status === 'failed') {
-      api.error({
-        message: 'Error',
-        description: 'Failed to add item. Please try again.',
-        duration: 3,
-        showProgress: true
-      })
-      dispatch(insertingItemStatusChanged())
-    }
-
-    if (updatingItem.status === 'succeeded') {
-      api.success({
-        message: 'Success',
-        description: 'Item updated successfully!',
-        duration: 3,
-        showProgress: true
-      })
-      dispatch(updatingItemStatusChanged())
-    } else if (updatingItem.status === 'failed') {
-      api.error({
-        message: 'Error',
-        description: 'Failed to update item. Please try again.',
-        duration: 3,
-        showProgress: true
-      })
-      dispatch(updatingItemStatusChanged())
-    }
-
-    if (deletingItem.status === 'succeeded') {
-      api.success({
-        message: 'Success',
-        description: 'Item deleted successfully!',
-        duration: 3,
-        showProgress: true
-      })
-      dispatch(deletingItemStatusChanged())
-    } else if (deletingItem.status === 'failed') {
-      api.error({
-        message: 'Error',
-        description: 'Failed to delete item. Please try again.',
-        duration: 3,
-        showProgress: true
-      })
-      dispatch(deletingItemStatusChanged())
-    }
-
-    if (insertingCategory.status === 'succeeded') {
-      api.success({
-        message: 'Success',
-        description: 'Category created successfully!',
-        duration: 3,
-        showProgress: true
-      })
-      dispatch(insertingCategoryStatusChanged())
-    } else if (insertingCategory.status === 'failed') {
-      api.error({
-        message: 'Error',
-        description: 'Failed to create category. Please try again.',
-        duration: 3,
-        showProgress: true
-      })
-      dispatch(insertingCategoryStatusChanged())
-    }
-  }, [
-    insertingItems.status,
-    api,
-    dispatch,
-    insertingCategory.status,
-    deletingItem.status,
-    updatingItem.status
-  ])
 
   const onDateSelect = (date: Dayjs) => {
     const formattedDate = dayjs(date).format('DD-MM-YYYY')
@@ -252,12 +154,6 @@ export const Scheduler: React.FC = () => {
 
   return (
     <Flex vertical align='center' gap={20} style={{ width: PAGE_WIDTH, height: '100vh', padding: '20px' }} >
-      {contextHolder}
-
-      <AddItemModal />
-      <ItemModal />
-      <CategoryModal />
-
       <Splitter style={{ height: '100%', width: '100%', overflow: 'hidden' }}>
         <Splitter.Panel
           defaultSize="80%" min="70%" max="80%"
@@ -289,7 +185,6 @@ export const Scheduler: React.FC = () => {
               />
 
               <Button type='primary' onClick={() => dispatch(addItemModalOpened(true))}>Add Activity</Button>
-
 
               <Button type='primary' onClick={() => dispatch(categoryModalOpened(true))}>Create Category</Button>
             </Flex>
