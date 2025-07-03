@@ -13,6 +13,7 @@ import {
 import { Scheduler } from './features/scheduler/Scheduler'
 import {
   deletingItemStatusChanged,
+  feedbackModalOpened,
   fetchCategoriesAsync,
   fetchItemsAsync,
   filtersInitialSet,
@@ -23,7 +24,9 @@ import {
   selectInsertingCategoryState,
   selectInsertingItemState,
   selectLeyout,
+  selectSendingFeedbackState,
   selectUpdatingItemState,
+  sendingFeedbackStatusChanged,
   siderCollapseSet,
   updatingItemStatusChanged
 } from './features/scheduler/SchedulerSlice'
@@ -43,6 +46,8 @@ import { ActivityBoard } from './features/scheduler/ActivityBoard'
 import { AddItemModal } from './features/scheduler/AddItemModal'
 import { ItemModal } from './features/scheduler/ItemModal'
 import { CategoryModal } from './features/scheduler/CategoryModal'
+import { Home } from './features/home/Home'
+import { FeedbackModal } from './features/scheduler/FeedbackModal'
 
 
 const { Sider, Content } = Layout
@@ -64,17 +69,13 @@ const App = () => {
   const insertingCategory = useAppSelector(selectInsertingCategoryState)
   const deletingItem = useAppSelector(selectDeletingItemState)
   const updatingItem = useAppSelector(selectUpdatingItemState)
+  const sendingFeedback = useAppSelector(selectSendingFeedbackState)
 
   const userId = useAppSelector(selectUserId)
 
   const [api, contextHolder] = notification.useNotification()
 
   const items = [
-    {
-      key: '1',
-      icon: <HomeOutlined />,
-      label: 'Home'
-    },
     ...(userId ? [
       {
         key: '2',
@@ -86,7 +87,13 @@ const App = () => {
         icon: <FormOutlined />,
         label: 'Activity Board'
       }
-    ] : [])
+    ] : [
+      {
+        key: '1',
+        icon: <HomeOutlined />,
+        label: 'Home'
+      }
+    ])
   ]
 
   useEffect(() => {
@@ -221,6 +228,24 @@ const App = () => {
       })
       dispatch(loggingInStatusReset())
     }
+
+    if (sendingFeedback.status === 'succeeded') {
+      api.success({
+        message: 'Success',
+        description: 'Your feedback was submitted successfully',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(sendingFeedbackStatusChanged())
+    } else if (sendingFeedback.status === 'failed') {
+      api.error({
+        message: 'Error',
+        description: 'We couldn\'t send your feedback. Please try again later',
+        duration: 3,
+        showProgress: true
+      })
+      dispatch(sendingFeedbackStatusChanged())
+    }
   }, [
     dispatch,
     api,
@@ -229,7 +254,8 @@ const App = () => {
     insertingItems.status,
     loggingin.status,
     registering.status,
-    updatingItem.status
+    updatingItem.status,
+    sendingFeedback.status
   ])
 
   const onLoginClick = () => {
@@ -245,7 +271,7 @@ const App = () => {
   const renderContent = (key: string) => {
     switch (key) {
       case '1':
-        return <div>Content for Navigation One</div>
+        return <Home />
       case '2':
         return <Scheduler />
       case '3':
@@ -304,7 +330,7 @@ const App = () => {
               ? <Tooltip title='Feedback' arrow placement='right'><MessageOutlined /></Tooltip>
               : <MessageOutlined />
           }
-          // onClick={onFeedbackClick}
+          onClick={() => dispatch(feedbackModalOpened(true))}
           style={buttonStyle}
         >
           {!siderCollapsed && 'Feedback'}
@@ -329,6 +355,7 @@ const App = () => {
       <AddItemModal />
       <ItemModal />
       <CategoryModal />
+      <FeedbackModal />
 
       <Sider
         style={{

@@ -90,7 +90,7 @@ const transformFormValuesToCalendarItem = (
     date: values.date?.format('DD-MM-YYYY') ?? '',
     description: values.description || '',
     color: hasCategory ? categoryColor : colorString,
-    repeat: undefined, //todo
+    repeat: undefined, 
     categoryId: hasCategory ? values.category : undefined
   }
 
@@ -106,7 +106,7 @@ const transformFormValuesToCalendarItem = (
           startTime: values.timeRange?.[0].format('HH:mm') ?? undefined,
           endTime: values.timeRange?.[1].format('HH:mm') ?? undefined,
           todoList: values.labelList.map((label, index) => ({ key: index, text: label, done: false })),
-          estimatedTime: undefined //todo
+          estimatedTime: undefined
         }
       }
     }

@@ -91,20 +91,6 @@ const isTodoList = (value: unknown): value is TodoList => {
   })
 }
 
-const isNumberArray = (value: unknown): value is number[] => {
-  return Array.isArray(value) && value.every((v) => typeof v === 'number')
-}
-
-const isRepeatSettings = (value: unknown): value is RepeatSettings => {
-  return (
-    typeof value === 'object' && value !== null &&
-    'frequency' in value && typeof value.frequency === 'string' &&
-    ['daily', 'weekly', 'monthly', 'yearly'].includes(value.frequency)) &&
-    'interval' in value && typeof value.interval === 'number' &&
-    'daysOfWeek' in value && isNumberArray(value.daysOfWeek) &&
-    'endDate' in value && value.endDate === 'string'
-}
-
 const isCategory = (value: unknown): value is Category => {
   return (
     typeof value === 'object' && value !== null &&
@@ -188,6 +174,11 @@ export type TodoList = {
   done: boolean
 }
 
+export type FeedbackParams = {
+  email?: string
+  message: string
+}
+
 export const fetchItems = async (userId: string): Promise<ItemEntity[]> => {
   const res = await axios.get('/items/fetch', { params: { userId } })
 
@@ -262,10 +253,16 @@ export const fetchCategories = async (userId: string): Promise<CategoryEntity[]>
   }
 
   if (Array.isArray(res.data) && res.data.every(item => isCategoryEntity(item))) {
-    console.log('hre');
-
     return res.data
   }
 
   throw new Error('Invalid Response Data')
+}
+
+export const submitFeedback = async (params: FeedbackParams): Promise<void> => {
+  const res = await axios.post('/feedback', params)
+
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error('Failed to submit feedback')
+  }
 }

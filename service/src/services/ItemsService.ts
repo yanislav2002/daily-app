@@ -1,5 +1,5 @@
 import { injectable } from "inversify"
-import { EventDetails, IItemsService, Item } from "./interfaces/IItemsService.js"
+import { IItemsService, Item } from "./interfaces/IItemsService.js"
 import { ItemEntity } from "../model/ItemsEntity.js"
 import {
   BaseItemModel,

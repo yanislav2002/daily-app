@@ -3,7 +3,6 @@ import {
   IItemsService,
   Item,
   ReminderDetails,
-  RepeatSettings,
   TaskDetails,
   TodoList
 } from "../services/interfaces/IItemsService.js"
@@ -102,20 +101,6 @@ const isTodoList = (value: unknown): value is TodoList => {
       typeof obj.done === 'boolean'
     )
   })
-}
-
-const isNumberArray = (value: unknown): value is number[] => {
-  return Array.isArray(value) && value.every((v) => typeof v === 'number')
-}
-
-const isRepeatSettings = (value: unknown): value is RepeatSettings => {
-  return (
-    typeof value === 'object' && value !== null &&
-    'frequency' in value && typeof value.frequency === 'string' &&
-    ['daily', 'weekly', 'monthly', 'yearly'].includes(value.frequency)) &&
-    'interval' in value && typeof value.interval === 'number' &&
-    'daysOfWeek' in value && isNumberArray(value.daysOfWeek) &&
-    'endDate' in value && value.endDate === 'string'
 }
 
 @controller('/items')

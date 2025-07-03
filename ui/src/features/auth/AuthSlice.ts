@@ -20,7 +20,7 @@ type State = {
 const initialState: State = {
   registeringStatus: { status: 'idle' },
   loggingInStatus: { status: 'idle' },
-  userId: '685e2f94e227fc23b3d5137e', //todo remove this 
+  userId: '', 
   countryCode: undefined,
   modal: {
     open: false,

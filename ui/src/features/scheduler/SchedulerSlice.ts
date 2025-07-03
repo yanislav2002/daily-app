@@ -4,6 +4,7 @@ import {
   Category,
   CategoryEntity,
   deleteItem,
+  FeedbackParams,
   fetchCategories,
   fetchItems,
   insertCategory,
@@ -12,12 +13,12 @@ import {
   Item,
   ItemEntity,
   ItemType,
+  submitFeedback,
   TaskStatus,
   updateItem
 } from "./SchedulerAPI"
 import ThunkStatus from "../../util/ThunkStatus"
-import { logoutUser, selectUserId } from "../auth/AuthSlice"
-import { useAppSelector } from "../../app/hooks"
+import { logoutUser } from "../auth/AuthSlice"
 
 
 const itemsAdapter = createEntityAdapter<ItemEntity>()
@@ -38,6 +39,7 @@ type State = {
   deletingItem: ThunkStatus
   fetchingCategories: ThunkStatus
   insertingCategory: ThunkStatus
+  sendingFeedback: ThunkStatus
   addItemModal: {
     open: boolean
     editingItem: ItemEntity | undefined
@@ -55,7 +57,7 @@ type State = {
   categoryModal: {
     open: boolean
   }
-  layout: { //todo remove it hrom this slica create separate
+  layout: {
     siderCollapsed: boolean
     selectedMenuKey: string
   }
@@ -65,6 +67,7 @@ type State = {
   filtersAdapter: EntityState<FilterOption, string>
   itemsAdapter: EntityState<ItemEntity, string>
   categoriesAdapter: EntityState<CategoryEntity, string>
+  feedbackModalOpen: boolean
 }
 
 const initialState: State = {
@@ -74,6 +77,7 @@ const initialState: State = {
   deletingItem: { status: "idle" },
   fetchingCategories: { status: "idle" },
   insertingCategory: { status: "idle" },
+  sendingFeedback: { status: "idle" },
   addItemModal: {
     open: false,
     editingItem: undefined,
@@ -97,10 +101,11 @@ const initialState: State = {
   filtersAdapter: filtersAdapter.getInitialState(),
   itemsAdapter: itemsAdapter.getInitialState(),
   categoriesAdapter: categoriesAdapter.getInitialState(),
-  layout: { //todo remove
+  layout: {
     siderCollapsed: false,
     selectedMenuKey: '1'
-  }
+  },
+  feedbackModalOpen: false
 }
 
 const schedulerSlice = createSlice({
@@ -115,6 +120,9 @@ const schedulerSlice = createSlice({
     },
     categoryModalOpened: (state, action: PayloadAction<boolean>) => {
       state.categoryModal.open = action.payload
+    },
+    feedbackModalOpened: (state, action: PayloadAction<boolean>) => {
+      state.feedbackModalOpen = action.payload
     },
     formFieldAllDaySwitched: (state, action: PayloadAction<boolean>) => {
       state.addItemModal.fields.allDay = action.payload
@@ -139,6 +147,9 @@ const schedulerSlice = createSlice({
     },
     fetchingItemStatusChanged: (state) => {
       state.fetchingItems = { status: 'idle', error: undefined }
+    },
+    sendingFeedbackStatusChanged: (state) => {
+      state.sendingFeedback = { status: 'idle', error: undefined }
     },
     itemModalItemSet: (state, action: PayloadAction<ItemEntity | undefined>) => {
       state.itemModal.item = action.payload
@@ -227,7 +238,6 @@ const schedulerSlice = createSlice({
       })
       .addCase(fetchItemsAsync.rejected, (state) => {
         state.fetchingItems.status = 'failed'
-        state.fetchingItems.error = '//todo add err'
       })
 
       .addCase(insertItemAsync.pending, (state) => {
@@ -245,7 +255,6 @@ const schedulerSlice = createSlice({
       })
       .addCase(insertItemAsync.rejected, (state) => {
         state.insertingItem.status = 'failed'
-        state.insertingItem.error = '//todo add err'
       })
 
       .addCase(insertCategoryAsync.pending, (state) => {
@@ -269,7 +278,6 @@ const schedulerSlice = createSlice({
       })
       .addCase(insertCategoryAsync.rejected, (state) => {
         state.insertingCategory.status = 'failed'
-        state.insertingCategory.error = '//todo add err'
       })
 
       .addCase(fetchCategoriesAsync.pending, (state) => {
@@ -287,7 +295,6 @@ const schedulerSlice = createSlice({
       })
       .addCase(fetchCategoriesAsync.rejected, (state) => {
         state.fetchingCategories.status = 'failed'
-        state.fetchingCategories.error = '//todo add err'
       })
 
       .addCase(updateItemAsync.pending, (state) => {
@@ -311,7 +318,6 @@ const schedulerSlice = createSlice({
       })
       .addCase(updateItemAsync.rejected, (state) => {
         state.updatingItem.status = 'failed'
-        state.updatingItem.error = '//todo add err'
       })
 
       .addCase(deleteItemAsync.pending, (state) => {
@@ -327,13 +333,23 @@ const schedulerSlice = createSlice({
       })
       .addCase(deleteItemAsync.rejected, (state) => {
         state.deletingItem.status = 'failed'
-        state.deletingItem.error = '//todo add err'
       })
 
       .addCase(logoutUser, (state) => {
         itemsAdapter.removeAll(state.itemsAdapter)
         categoriesAdapter.removeAll(state.categoriesAdapter)
         filtersAdapter.removeAll(state.filtersAdapter)
+      })
+
+      .addCase(submitFeedbackAsync.pending, (state) => {
+        state.sendingFeedback.status = 'loading'
+      })
+      .addCase(submitFeedbackAsync.fulfilled, (state) => {
+        state.sendingFeedback.status = 'succeeded'
+        state.feedbackModalOpen = false
+      })
+      .addCase(submitFeedbackAsync.rejected, (state) => {
+        state.sendingFeedback.status = 'failed'
       })
 
   }
@@ -368,7 +384,7 @@ export const updateItemAsync = createAsyncThunk(
   async (item: ItemEntity, { getState }) => {
     const state = getState() as RootState
     const userId = state.auth.userId
-    
+
     if (userId) {
       return await updateItem(item, userId)
     }
@@ -380,7 +396,7 @@ export const deleteItemAsync = createAsyncThunk(
   async (id: string, { getState }) => {
     const state = getState() as RootState
     const userId = state.auth.userId
-    
+
     if (userId) {
       await deleteItem(id, userId)
     }
@@ -392,7 +408,7 @@ export const insertCategoryAsync = createAsyncThunk(
   async (category: Category, { getState }) => {
     const state = getState() as RootState
     const userId = state.auth.userId
-    
+
     if (userId) {
       return await insertCategory(category, userId)
     }
@@ -404,10 +420,17 @@ export const fetchCategoriesAsync = createAsyncThunk(
   async (_, { getState }) => {
     const state = getState() as RootState
     const userId = state.auth.userId
-    
+
     if (userId) {
       return await fetchCategories(userId)
     }
+  }
+)
+
+export const submitFeedbackAsync = createAsyncThunk(
+  'feedback/submit',
+  async (params: FeedbackParams) => {
+    await submitFeedback(params)
   }
 )
 
@@ -419,8 +442,10 @@ export const selectDeletingItemState = (state: RootState) => state.scheduler.del
 export const selectInsertingCategoryState = (state: RootState) => state.scheduler.insertingCategory
 export const selectCategoryModal = (state: RootState) => state.scheduler.categoryModal
 export const selectSelectedCalendarDate = (state: RootState) => state.scheduler.calendarSelectedDate
+export const selectSendingFeedbackState = (state: RootState) => state.scheduler.sendingFeedback
+export const selectFeedbackModalOpened = (state: RootState) => state.scheduler.feedbackModalOpen
 
-export const selectLeyout = (state: RootState) => state.scheduler.layout //todo remove
+export const selectLeyout = (state: RootState) => state.scheduler.layout
 
 export const itemsSelectors = itemsAdapter.getSelectors(
   (state: RootState) => state.scheduler.itemsAdapter
@@ -455,7 +480,9 @@ export const {
   filtersUpdated,
   menuKeySelected,
   siderCollapseSet,
-  calendarSelectedDateSet
+  calendarSelectedDateSet,
+  feedbackModalOpened,
+  sendingFeedbackStatusChanged
 } = schedulerSlice.actions
 
 export default schedulerSlice.reducer

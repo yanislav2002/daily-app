@@ -1,4 +1,4 @@
-import { Button, Flex, Table } from "antd"
+import { Empty, Flex } from "antd"
 import { Board } from "../../util/components/Board"
 import { useAppSelector } from "../../app/hooks"
 import { categoriesSelectors, itemsSelectors, selectLeyout } from "./SchedulerSlice"
@@ -33,6 +33,12 @@ export const ActivityBoard: React.FC = () => {
 
       {tasksWithoutCategory.length > 0 && (
         <Board tasks={tasksWithoutCategory} title="Uncategorized" />
+      )}
+
+      {tasksByCategory.length === 0 && tasksWithoutCategory.length === 0 && (
+        <Flex justify="center" align="center" style={{width: '100%', height: '90vh'}}>
+          <Empty />
+        </Flex>
       )}
     </Flex>
   )
